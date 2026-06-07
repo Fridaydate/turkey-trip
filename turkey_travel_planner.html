@@ -34,169 +34,173 @@
     }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: #F7F9FE; color: var(--color-text-primary); min-height: 100vh; padding: 2rem 1rem; }
+  body { font-family: var(--font); background: #F7FAFE; color: var(--color-text-primary); min-height: 100vh; padding: 2rem 1.25rem; }
   .container { max-width: 760px; margin: 0 auto; }
   .page-header { padding: 2.5rem 0 1.75rem; }
   .page-icon { font-size: 64px; line-height: 1; margin-bottom: 14px; display: block; }
-  .page-title { font-size: 38px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+  .page-title { font-size: 38px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; display: flex; justify-content: space-between; align-items: baseline; }
+  #dday-display { font-weight: 700; letter-spacing: -0.03em; }
+  #dday-display.before { color: #2273FF; }
+  #dday-display.ongoing { color: #085041; }
+  #dday-display.after { color: #6b6b6b; }
 
   .card { background: var(--color-bg); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 0.7rem; overflow: hidden; }
-  #loading-screen { position: fixed; inset: 0; background: #F7F9FE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; font-size: 15px; color: var(--color-text-secondary); }
-  #loading-screen .spin { width: 28px; height: 28px; border: 3px solid rgba(83,74,183,0.2); border-top-color: #534AB7; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  #loading-screen { position: fixed; inset: 0; background: #F7FAFE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; font-size: 17px; color: var(--color-text-secondary); }
+  #loading-screen .spin { width: 28px; height: 28px; border: 3px solid rgba(34,115,255,0.2); border-top-color: #2273FF; border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #firebase-error { background: #FCEBEB; color: #A32D2D; font-size: 13px; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 1rem; display: none; }
+  #firebase-error { background: #FCEBEB; color: #A32D2D; font-size: 15px; padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 1rem; display: none; }
 
-  .week-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 0.5px solid var(--color-border); }
-  .week-title { font-size: 15px; font-weight: 500; }
-  .week-nav button { background: none; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); padding: 4px 8px; cursor: pointer; color: var(--color-text-secondary); font-size: 15px; margin-left: 6px; font-family: var(--font); line-height: 1; }
+  .week-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px; border-bottom: 0.5px solid var(--color-border); }
+  .week-title { font-size: 17px; font-weight: 500; }
+  .week-nav button { background: none; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); padding: 4px 8px; cursor: pointer; color: var(--color-text-secondary); font-size: 17px; margin-left: 6px; font-family: var(--font); line-height: 1; }
   .week-nav button:hover { background: rgba(0,0,0,0.02); }
   .week-nav button:disabled { opacity: 0.3; cursor: default; }
 
-  .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 12px; }
-  .day-cell { border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 10px 8px; cursor: pointer; min-height: 82px; background: var(--color-bg); transition: border-color 0.12s, background 0.12s; }
+  .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 12px 14px; }
+  .day-cell { border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 10px 8px; cursor: pointer; min-height: 62px; background: var(--color-bg); transition: border-color 0.12s, background 0.12s; }
   .day-cell:hover { background: rgba(0,0,0,0.02); }
-  .day-cell.active { border: 0.5px solid var(--color-border); background: #EEF1FB; }
+  .day-cell.active { border: 0.5px solid var(--color-border); background: #F1F6FB; }
   .day-cell.other-month { opacity: 0.3; cursor: default; pointer-events: none; }
-  .day-dow { font-size: 10px; color: var(--color-text-tertiary); margin-bottom: 4px; }
-  .day-num { font-size: 13px; font-weight: 500; margin-bottom: 5px; }
-  .city-pill { font-size: 9px; font-weight: 500; border-radius: 4px; padding: 2px 5px; display: inline-block; line-height: 1.5; }
+  .day-dow { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+  .day-num { font-size: 15px; font-weight: 500; margin-bottom: 5px; }
+  .city-pill { font-size: 11px; font-weight: 500; border-radius: 4px; padding: 3px 7px; display: inline-block; line-height: 1.5; }
   .pill-istanbul { background: #EEEDFE; color: #3C3489; }
   .pill-cappadocia { background: #FAECE7; color: #712B13; }
   .pill-antalya { background: #E1F5EE; color: #085041; }
-  .task-count { font-size: 10px; color: var(--color-text-tertiary); margin-top: 4px; }
-  .flight-note { font-size: 9px; color: var(--color-text-secondary); margin-top: 3px; border-top: 0.5px solid var(--color-border); padding-top: 3px; }
+  .task-count { font-size: 12px; color: var(--color-text-tertiary); margin-top: 4px; }
+  .flight-note { font-size: 11px; color: var(--color-text-secondary); margin-top: 3px; border-top: 0.5px solid var(--color-border); padding-top: 3px; }
 
-  .detail-header { padding: 14px 20px; }
-  .detail-title { font-size: 16px; font-weight: 500; }
-  .detail-sub { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
-  .detail-body { padding: 16px 20px; }
-  .no-day { text-align: center; padding: 40px 20px; color: var(--color-text-tertiary); font-size: 14px; }
+  .detail-header { padding: 14px 26px; }
+  .detail-title { font-size: 18px; font-weight: 500; }
+  .detail-sub { font-size: 14px; color: #6b6b6b; margin-top: 2px; }
+  .detail-body { padding: 16px 26px; }
+  .no-day { text-align: center; padding: 40px 20px; color: var(--color-text-tertiary); font-size: 16px; }
   .no-day i { font-size: 28px; display: block; margin: 0 auto 8px; }
 
   .task-list { margin-bottom: 12px; }
-  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 16px; border: 0.5px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 6px; background: var(--color-bg); cursor: default; }
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 14px 20px; border: 0.5px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 6px; background: var(--color-bg); cursor: default; }
   .task-item.dragging { opacity: 0.4; }
-  .task-item.drag-over { border-color: #534AB7; border-style: dashed; }
-  .drag-handle { color: var(--color-text-tertiary); font-size: 14px; cursor: grab; padding-top: 2px; flex-shrink: 0; }
-  .task-tag-badge { font-size: 10px; border-radius: 3px; padding: 2px 6px; display: inline-block; margin-bottom: 3px; font-weight: 500; }
-  .task-name-text { font-size: 15px; line-height: 1.4; font-weight: 500; }
-  .no-task-empty { text-align: center; padding: 32px 20px 8px; color: var(--color-text-tertiary); font-size: 14px; }
+  .task-item.drag-over { border-color: #2273FF; border-style: dashed; }
+  .drag-handle { color: var(--color-text-tertiary); font-size: 16px; cursor: grab; padding-top: 2px; flex-shrink: 0; }
+  .task-tag-badge { font-size: 11px; border-radius: 4px; padding: 3px 9px; display: inline-block; margin-bottom: 4px; font-weight: 500; }
+  .task-name-text { font-size: 16px; line-height: 1.4; font-weight: 500; }
+  .no-task-empty { text-align: center; padding: 32px 20px 8px; color: var(--color-text-tertiary); font-size: 16px; }
   .no-task-empty i { font-size: 28px; display: block; margin: 0 auto 8px; }
-  .add-task-cta-btn { display: block; width: 100%; padding: 9px; font-size: 13px; font-weight: 400; color: var(--color-text-secondary); background: none; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); text-align: center; margin-bottom: 16px; }
+  .add-task-cta-btn { display: block; width: 100%; padding: 9px; font-size: 15px; font-weight: 400; color: var(--color-text-secondary); background: none; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); text-align: center; margin-bottom: 16px; }
   .add-task-cta-btn:hover { background: rgba(0,0,0,0.02); }
-  .task-desc-text { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-top: 3px; white-space: pre-wrap; }
-  .task-link { font-size: 11px; color: var(--color-text-info); text-decoration: none; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-meta { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
-  .cost-text { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; }
-  .map-text { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; text-decoration: none; display: inline-block; }
+  .task-desc-text { font-size: 14px; color: #6b6b6b; line-height: 1.5; margin-top: 3px; white-space: pre-wrap; }
+  .task-link { font-size: 14px; color: #6b6b6b; text-decoration: none; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { font-size: 14px; color: #6b6b6b; margin-top: 2px; }
+  .cost-text { font-size: 14px; color: #6b6b6b; margin-top: 3px; }
+  .map-text { font-size: 14px; color: #6b6b6b; margin-top: 3px; text-decoration: none; display: inline-block; }
   .settlement-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); gap: 8px; }
   .settlement-item:last-child { border-bottom: none; }
   .settlement-item.unchecked { opacity: 0.38; }
-  .settlement-check { width: 16px; height: 16px; cursor: pointer; accent-color: #534AB7; flex-shrink: 0; }
-  .settlement-label { font-size: 13px; flex: 1; min-width: 0; }
-  .settlement-split-btn { flex-shrink: 0; border: 0.5px solid var(--color-border); border-radius: 6px; padding: 3px 7px; font-size: 11px; font-weight: 600; cursor: pointer; background: none; font-family: var(--font); color: var(--color-text-tertiary); }
-  .settlement-split-btn.on { background: #534AB7; color: #fff; border-color: #534AB7; }
-  .settlement-cost { font-size: 13px; font-weight: 500; color: #993C1D; flex-shrink: 0; min-width: 80px; text-align: right; }
+  .settlement-check { width: 16px; height: 16px; cursor: pointer; accent-color: #2273FF; flex-shrink: 0; }
+  .settlement-label { font-size: 16px; flex: 1; min-width: 0; }
+  .settlement-split-btn { flex-shrink: 0; border: 0.5px solid var(--color-border); border-radius: 6px; padding: 3px 7px; font-size: 13px; font-weight: 600; cursor: pointer; background: none; font-family: var(--font); color: var(--color-text-tertiary); }
+  .settlement-split-btn.on { background: #2273FF; color: #fff; border-color: #2273FF; }
+  .settlement-cost { font-size: 15px; font-weight: 500; color: #993C1D; flex-shrink: 0; min-width: 80px; text-align: right; }
   .settlement-total { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 0; margin-top: 4px; border-top: 1px solid var(--color-border); }
-  .settlement-total-label { font-size: 14px; font-weight: 600; }
-  .settlement-total-amount { font-size: 16px; font-weight: 700; color: #993C1D; }
-  .settlement-empty { text-align: center; padding: 20px; color: var(--color-text-tertiary); font-size: 13px; }
+  .settlement-total-label { font-size: 16px; font-weight: 600; }
+  .settlement-total-amount { font-size: 18px; font-weight: 700; color: #993C1D; }
+  .settlement-empty { text-align: center; padding: 20px; color: var(--color-text-tertiary); font-size: 15px; }
   .todo-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); }
   .todo-item:last-child { border-bottom: none; }
   .todo-item.done .todo-title { text-decoration: line-through; color: var(--color-text-tertiary); }
   .todo-item.done { opacity: 0.5; }
-  .todo-check { width: 16px; height: 16px; cursor: pointer; accent-color: #534AB7; flex-shrink: 0; }
-  .todo-title { font-size: 13px; flex: 1; min-width: 0; }
-  .todo-person-tag { font-size: 10px; font-weight: 600; border-radius: 10px; padding: 2px 7px; flex-shrink: 0; }
+  .todo-check { width: 16px; height: 16px; cursor: pointer; accent-color: #2273FF; flex-shrink: 0; }
+  .todo-title { font-size: 16px; flex: 1; min-width: 0; }
+  .todo-person-tag { font-size: 11px; font-weight: 600; border-radius: 10px; padding: 3px 10px; flex-shrink: 0; }
   .todo-person-yeseul { background: #FBEAF0; color: #72243E; }
   .todo-person-jungho  { background: #E6F1FB; color: #0C447C; }
-  .todo-empty { text-align: center; padding: 20px; color: var(--color-text-tertiary); font-size: 13px; }
+  .todo-empty { text-align: center; padding: 20px; color: var(--color-text-tertiary); font-size: 15px; }
   .task-actions { display: flex; gap: 2px; flex-shrink: 0; padding-top: 1px; }
-  .icon-btn { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 4px; line-height: 1; border-radius: 4px; font-size: 14px; }
-  .icon-btn.edit:hover { color: #534AB7; background: rgba(0,0,0,0.02); }
+  .icon-btn { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 4px; line-height: 1; border-radius: 4px; font-size: 16px; }
+  .icon-btn.edit:hover { color: #2273FF; background: rgba(0,0,0,0.02); }
   .icon-btn.del:hover { color: #A32D2D; background: rgba(0,0,0,0.02); }
 
-  .add-more-btn { width: 100%; background: none; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 9px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; margin-bottom: 16px; font-family: var(--font); }
+  .add-more-btn { width: 100%; background: none; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 9px; font-size: 15px; color: var(--color-text-secondary); cursor: pointer; margin-bottom: 16px; font-family: var(--font); }
   .add-more-btn:hover { background: rgba(0,0,0,0.02); }
 
   .add-section { border-top: 0.5px solid var(--color-border); padding-top: 16px; }
-  .form-section-title { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
-  .field-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px; }
+  .form-section-title { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+  .field-label { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 5px; }
   .field-required { color: #993C1D; }
   .field-opt { color: var(--color-text-tertiary); font-weight: 400; }
 
   input[type="text"], input[type="url"] {
-    width: 100%; font-size: 13px; padding: 8px 10px; border: 0.5px solid var(--color-border-md);
+    width: 100%; font-size: 15px; padding: 8px 12px; border: 0.5px solid var(--color-border-md);
     border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-primary);
     font-family: var(--font); outline: none; margin-bottom: 14px;
   }
-  input[type="text"]:focus, input[type="url"]:focus { border-color: #534AB7; box-shadow: 0 0 0 2px rgba(83,74,183,0.12); }
+  input[type="text"]:focus, input[type="url"]:focus { border-color: #2273FF; box-shadow: 0 0 0 2px rgba(34,115,255,0.12); }
   input::placeholder { color: var(--color-text-tertiary); }
 
   .desc-textarea {
-    width: 100%; font-size: 13px; resize: vertical; min-height: 76px; padding: 8px 10px;
+    width: 100%; font-size: 15px; resize: vertical; min-height: 76px; padding: 8px 12px;
     border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md);
     background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font);
     line-height: 1.6; margin-bottom: 14px; outline: none;
   }
-  .desc-textarea:focus { border-color: #534AB7; box-shadow: 0 0 0 2px rgba(83,74,183,0.12); }
+  .desc-textarea:focus { border-color: #2273FF; box-shadow: 0 0 0 2px rgba(34,115,255,0.12); }
   .desc-textarea::placeholder { color: var(--color-text-tertiary); }
 
   .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-  .tag-btn { border: none; border-radius: 20px; padding: 5px 11px; font-size: 12px; cursor: pointer; background: rgba(0,0,0,0.04); color: var(--color-text-secondary); font-family: var(--font); transition: all 0.12s; }
+  .tag-btn { border: none; border-radius: 20px; padding: 5px 13px; font-size: 14px; cursor: pointer; background: rgba(0,0,0,0.04); color: var(--color-text-secondary); font-family: var(--font); transition: all 0.12s; }
   .tag-btn:hover { background: rgba(0,0,0,0.02); }
   .tag-btn.sel-food     { border-color: #993C1D; background: #D85A30; color: #fff; font-weight: 500; }
   .tag-btn.sel-cafe     { border-color: #854F0B; background: #BA7517; color: #fff; font-weight: 500; }
   .tag-btn.sel-shopping { border-color: #993556; background: #D4537E; color: #fff; font-weight: 500; }
-  .tag-btn.sel-tour     { border-color: #534AB7; background: #7F77DD; color: #fff; font-weight: 500; }
+  .tag-btn.sel-tour     { border-color: #2273FF; background: #7F77DD; color: #fff; font-weight: 500; }
   .tag-btn.sel-activity { border-color: #3B6D11; background: #639922; color: #fff; font-weight: 500; }
   .tag-btn.sel-move     { border-color: #185FA5; background: #378ADD; color: #fff; font-weight: 500; }
   .tag-btn.sel-hotel    { border-color: #0F6E56; background: #1D9E75; color: #fff; font-weight: 500; }
   .tag-btn.sel-etc      { border-color: #5F5E5A; background: #888780; color: #fff; font-weight: 500; }
 
   .optional-row { display: flex; gap: 8px; margin-bottom: 0; }
-  .opt-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 9px 8px; cursor: pointer; font-size: 12px; color: var(--color-text-secondary); background: none; font-family: var(--font); }
+  .opt-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 9px 12px; cursor: pointer; font-size: 14px; color: var(--color-text-secondary); background: none; font-family: var(--font); }
   .opt-btn:hover { background: rgba(0,0,0,0.02); }
   .opt-btn.selected { border: 0.5px solid #AFA9EC; background: #EEEDFE; color: #3C3489; }
-  .optional-fields { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 12px; margin-top: 8px; }
+  .optional-fields { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 14px 16px; margin-top: 8px; }
   .optional-fields input { margin-bottom: 0; }
-  .pdf-upload-label { display: flex; align-items: center; gap: 8px; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 10px 14px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); background: var(--color-bg); }
+  .pdf-upload-label { display: flex; align-items: center; gap: 8px; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 10px 18px; cursor: pointer; font-size: 15px; color: var(--color-text-secondary); background: var(--color-bg); }
   .pdf-upload-label:hover { background: rgba(0,0,0,0.02); }
   .pdf-upload-label input { display: none; }
-  .pdf-attached { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); margin-top: 6px; }
-  .attach-remove { font-size: 11px; color: var(--color-text-tertiary); cursor: pointer; text-decoration: underline; }
+  .pdf-attached { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--color-text-secondary); margin-top: 6px; }
+  .attach-remove { font-size: 13px; color: var(--color-text-tertiary); cursor: pointer; text-decoration: underline; }
 
   .submit-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
-  .cancel-btn { padding: 0 16px; height: 36px; font-size: 13px; background: none; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); cursor: pointer; color: var(--color-text-secondary); font-family: var(--font); }
+  .cancel-btn { padding: 0 20px; height: 38px; font-size: 15px; background: none; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); cursor: pointer; color: var(--color-text-secondary); font-family: var(--font); }
   .cancel-btn:hover { background: rgba(0,0,0,0.02); }
-  .submit-btn { padding: 0 20px; height: 36px; font-size: 13px; font-weight: 500; background: #534AB7; color: #fff; border: none; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); }
+  .submit-btn { padding: 0 24px; height: 38px; font-size: 15px; font-weight: 500; background: #2273FF; color: #fff; border: none; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); }
   .submit-btn:hover { background: rgba(0,0,0,0.02); filter: brightness(0.94); }
   .submit-btn:active { transform: scale(0.98); }
 
-  .hotel-section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; }
+  .hotel-section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 22px; cursor: pointer; user-select: none; }
   .hotel-section-header:hover { background: rgba(0,0,0,0.02); }
-  .hotel-section-title { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
-  .hotel-toggle { font-size: 12px; color: var(--color-text-tertiary); }
+  .hotel-section-title { font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .hotel-toggle { font-size: 14px; color: var(--color-text-tertiary); }
   .hotel-tabs { display: flex; border-top: 0.5px solid var(--color-border); border-bottom: 0.5px solid var(--color-border); }
-  .hotel-tab { flex: 1; padding: 9px 8px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--color-text-secondary); border-bottom: 2px solid transparent; font-family: var(--font); transition: color 0.12s; }
+  .hotel-tab { flex: 1; padding: 9px 8px; font-size: 15px; cursor: pointer; border: none; background: none; color: var(--color-text-secondary); border-bottom: 2px solid transparent; font-family: var(--font); transition: color 0.12s; }
   .hotel-tab:hover { color: var(--color-text-primary); background: rgba(0,0,0,0.02); }
   .hotel-tab.active { color: #1D9E75; border-bottom-color: #1D9E75; font-weight: 500; background: var(--color-bg-secondary); }
-  .hotel-body { padding: 12px 16px; }
-  .hotel-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 0.5px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 8px; background: var(--color-bg); }
+  .hotel-body { padding: 14px 22px; }
+  .hotel-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 0.5px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 8px; background: var(--color-bg); }
   .hotel-item-info { flex: 1; min-width: 0; }
-  .hotel-item-name { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
-  .hotel-item-address { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
-  .hotel-item-dates { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
+  .hotel-item-name { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+  .hotel-item-address { font-size: 14px; color: #6b6b6b; margin-top: 2px; }
+  .hotel-item-dates { font-size: 14px; color: #6b6b6b; margin-top: 3px; }
   .hotel-item-actions { display: flex; gap: 2px; flex-shrink: 0; padding-top: 1px; }
-  .hotel-empty { text-align: center; padding: 14px; color: var(--color-text-tertiary); font-size: 13px; }
-  .hotel-picker { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 14px; border: 0.5px solid var(--color-border); }
-  .hotel-picker-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: 500; }
+  .hotel-empty { text-align: center; padding: 14px; color: var(--color-text-tertiary); font-size: 15px; }
+  .hotel-picker { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 14px; border: 0.5px solid var(--color-border); }
+  .hotel-picker-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: 500; }
   .hotel-pick-list { display: flex; gap: 6px; flex-wrap: wrap; }
   .hotel-pick-card { border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); padding: 7px 10px; cursor: pointer; background: var(--color-bg); transition: all 0.12s; }
   .hotel-pick-card:hover { background: rgba(0,0,0,0.02); }
   .hotel-pick-card.selected { border-color: #1D9E75; background: #E1F5EE; }
-  .hcity-btn { border: none; border-radius: 20px; padding: 5px 11px; font-size: 12px; cursor: pointer; background: rgba(0,0,0,0.04); color: var(--color-text-secondary); font-family: var(--font); transition: all 0.12s; }
-  .hcity-btn.sel-istanbul  { border-color: #534AB7; background: #7F77DD; color: #fff; font-weight: 500; }
+  .hcity-btn { border: none; border-radius: 20px; padding: 5px 13px; font-size: 14px; cursor: pointer; background: rgba(0,0,0,0.04); color: var(--color-text-secondary); font-family: var(--font); transition: all 0.12s; }
+  .hcity-btn.sel-istanbul  { border-color: #2273FF; background: #7F77DD; color: #fff; font-weight: 500; }
   .hcity-btn.sel-cappadocia { border-color: #712B13; background: #D85A30; color: #fff; font-weight: 500; }
   .hcity-btn.sel-antalya  { border-color: #085041; background: #1D9E75; color: #fff; font-weight: 500; }
 </style>
@@ -207,14 +211,14 @@
   <div id="firebase-error"></div>
   <div class="page-header">
     <span class="page-icon">🇹🇷</span>
-    <h1 class="page-title">튀르키예 여행</h1>
+    <h1 class="page-title">튀르키예 여행 <span id="dday-display"></span></h1>
   </div>
 
+  <div id="schedule-root"></div>
   <div id="settlement-root"></div>
   <div id="todo-root"></div>
   <div id="hotel-root"></div>
   <div id="flight-root"></div>
-  <div id="schedule-root"></div>
 </div>
 
 <script type="module">
@@ -294,7 +298,7 @@ function saveTasks(){_remoteSkip.tasks=true;set(dbRef('tasks'),tasks);}
 function saveHotels(){_remoteSkip.hotels=true;set(dbRef('hotels'),hotels.length?hotels:null);}
 function saveTodos(){_remoteSkip.todos=true;set(dbRef('todos'),todos.length?todos:null);}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function getWeekStart(w){const b=new Date(2026,8,8);b.setDate(b.getDate()+w*7);return b;}
+function getWeekStart(w){const b=new Date(2026,8,7);b.setDate(b.getDate()+w*7);return b;}
 function getTag(key){return TAGS.find(t=>t.key===key)||TAGS[7];}
 function fmtCost(n){if(!n&&n!==0)return '';return Number(n).toLocaleString('ko-KR')+'원';}
 function parseCost(s){const n=parseInt(String(s).replace(/[^0-9]/g,''));return isNaN(n)?null:n;}
@@ -311,9 +315,9 @@ function renderCal(){
   const root=document.getElementById('cal-root');
   if(!root)return;
   const ws=getWeekStart(currentWeek);
-  const weeks=['1주차 (9/8–14)','2주차 (9/15–21)','3주차 (9/22–28)'];
+  const weeks=['1주차 (9/7–13)','2주차 (9/14–20)','3주차 (9/21–27)'];
   let h=`<div class="week-header">
-    <div class="week-title">2026년 9월 <span style="color:var(--color-text-secondary);font-weight:400;font-size:13px;">${weeks[currentWeek]}</span></div>
+    <div class="week-title">2026년 9월 <span style="color:var(--color-text-secondary);font-weight:400;font-size:15px;">${weeks[currentWeek]}</span></div>
     <div class="week-nav">
       <button onclick="changeWeek(-1)"${currentWeek===0?' disabled':''}><i class="ti ti-chevron-left"></i></button>
       <button onclick="changeWeek(1)"${currentWeek===2?' disabled':''}><i class="ti ti-chevron-right"></i></button>
@@ -326,14 +330,11 @@ function renderCal(){
     const tripStart=new Date(2026,8,10),tripEnd=new Date(2026,8,23);
     const inRange=d>=tripStart&&d<=tripEnd;
     const isActive=selectedDate===key;
-    const tc=(tasks[key]||[]).length;
     const pill=sch?CITY_PILL[sch.city]:'';
     h+=`<div class="day-cell${isActive?' active':''}${!inRange?' other-month':''}" onclick="${inRange?`selectDay('${key}')`:''}">
       <div class="day-dow">${DAYS[d.getDay()]}</div>
       <div class="day-num">${d.getDate()}</div>
       ${sch?`<span class="city-pill ${pill}">${sch.city}</span>`:''}
-      ${tc>0?`<div class="task-count"><i class="ti ti-check" style="font-size:10px"></i> ${tc}</div>`:''}
-      ${sch&&sch.note?`<div class="flight-note">${sch.note}</div>`:''}
     </div>`;
   }
   h+='</div>';
@@ -452,7 +453,7 @@ function renderDetail(){
       <button class="add-task-cta-btn" onclick="openAddForm()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 일정 추가</button>`;
   }
 
-  root.innerHTML=`<div style="background:#EEF1FB;">
+  root.innerHTML=`<div style="background:#F1F6FB;">
     <div class="detail-header">
       <div class="detail-title">9월 ${d.getDate()}일 (${DAYS[d.getDay()]})${sch?` <span class="city-pill ${pill}" style="font-size:11px;vertical-align:2px;">${sch.city}</span>`:''}</div>
       ${sch&&sch.note?`<div class="detail-sub">${sch.note}</div>`:''}
@@ -528,7 +529,7 @@ function renderHotelSection(){
       const pill=h.city?CITY_PILL[h.city]:'';
       return `<div class="hotel-item">
         <div class="hotel-item-info">
-          ${h.city?`<span class="city-pill ${pill}" style="font-size:9px;margin-bottom:4px;display:inline-block;">${esc(h.city)}</span>`:''}
+          ${h.city?`<span class="city-pill ${pill}" style="margin-bottom:4px;display:inline-block;">${esc(h.city)}</span>`:''}
           <div class="hotel-item-name">${esc(h.name)}</div>
           ${h.desc?`<div class="hotel-item-address">${esc(h.desc)}</div>`:''}
           ${h.cost!=null?`<div class="cost-text">💰 ${fmtCost(h.cost)}</div>`:''}
@@ -633,7 +634,7 @@ function renderVoucherSection(type){
   } else if(type==='flight'){
     listHtml=list.map((item,i)=>`<div class="hotel-item">
       <div class="hotel-item-info">
-        <div class="hotel-item-name" style="font-size:14px;letter-spacing:-0.01em;">${esc(item.from||'?')} → ${esc(item.to||'?')}</div>
+        <div class="hotel-item-name">${esc(item.from||'?')} → ${esc(item.to||'?')}</div>
         ${(item.departDate||item.arriveDate)?`<div class="hotel-item-dates">${item.departDate?esc(item.departDate):''}${item.departDate&&item.arriveDate?' → ':''}${item.arriveDate?esc(item.arriveDate):''}</div>`:''}
         ${item.cost!=null?`<div class="cost-text">💰 ${fmtCost(item.cost)}</div>`:''}
         ${item.pdf?`<div class="hotel-item-dates"><i class="ti ti-paperclip" style="font-size:10px;vertical-align:-1px"></i> ${esc(item.pdf)}${item.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openVoucherPdf('flight',${i})">열기</span>`:''}</div>`:''}
@@ -787,15 +788,10 @@ function openTaskPdf(idx){const d=((tasks[selectedDate]||[])[idx]||{}).pdfData;i
 function renderScheduleSection(){
   const root=document.getElementById('schedule-root');
   root.innerHTML=`<div class="card" style="margin-bottom:1rem;">
-    <div class="hotel-section-header" onclick="toggleScheduleSection()">
-      <div class="hotel-section-title"><i class="ti ti-calendar-event" style="font-size:16px;color:#534AB7;vertical-align:-2px;"></i> 일정</div>
-      <i class="ti ${scheduleOpen?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
-    </div>
-    ${scheduleOpen?`<div id="cal-root"></div><div id="detail-root" style="border-top:0.5px solid var(--color-border);"></div>`:''}
+    <div id="cal-root"></div><div id="detail-root" style="border-top:0.5px solid var(--color-border);"></div>
   </div>`;
-  if(scheduleOpen){renderCal();renderDetail();}
+  renderCal();renderDetail();
 }
-function toggleScheduleSection(){scheduleOpen=!scheduleOpen;renderScheduleSection();}
 
 function renderTodoSection(){
   const root=document.getElementById('todo-root');
@@ -808,7 +804,7 @@ function renderTodoSection(){
   if(todoFormState){
     const tf=todoFormState;
     const personBtns=Object.entries(PERSON).map(([k,v])=>
-      `<button class="hcity-btn${tf.person===k?` sel-istanbul`:''}" style="${tf.person===k?'border-color:#534AB7;background:#7F77DD;color:#fff;font-weight:500;':''}" onclick="setTodoPerson('${k}')">${v.label}</button>`
+      `<button class="hcity-btn${tf.person===k?` sel-istanbul`:''}" style="${tf.person===k?'border-color:#2273FF;background:#7F77DD;color:#fff;font-weight:500;':''}" onclick="setTodoPerson('${k}')">${v.label}</button>`
     ).join('');
     formHtml=`<div style="border-top:0.5px solid var(--color-border);padding-top:12px;margin-top:4px;">
       <div class="form-section-title">${tf.mode==='edit'?'할 일 수정':'할 일 추가'}</div>
@@ -838,7 +834,7 @@ function renderTodoSection(){
     }).join('');
   root.innerHTML=`<div class="card" style="margin-bottom:0.7rem;">
     <div class="hotel-section-header" onclick="toggleTodoSection()">
-      <div class="hotel-section-title"><i class="ti ti-checklist" style="font-size:16px;color:#534AB7;vertical-align:-2px;"></i> 할 일</div>
+      <div class="hotel-section-title"><i class="ti ti-checklist" style="font-size:16px;color:#2273FF;vertical-align:-2px;"></i> 할 일</div>
       <i class="ti ${todoOpen?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
     </div>
     ${todoOpen?`<div class="hotel-body">${listHtml}${!todoFormState?`<button class="add-more-btn" style="margin-bottom:0;margin-top:8px;" onclick="openTodoAdd()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 할 일 추가</button>`:''}${formHtml}</div>`:''}
@@ -884,7 +880,7 @@ function renderSettlementSection(){
       return `<div class="settlement-item${s.checked?'':' unchecked'}">
         <input class="settlement-check" type="checkbox" ${s.checked?'checked':''} onchange="toggleSettlementCheck('${it.key}')">
         <div class="settlement-label">
-          <span style="font-size:10px;font-weight:600;color:${it.tagColor};background:${it.tagBg};border-radius:3px;padding:1px 5px;margin-right:5px;">${it.tagLabel}</span>${esc(it.label)}
+          <span style="font-size:11px;font-weight:600;color:${it.tagColor};background:${it.tagBg};border-radius:4px;padding:3px 8px;margin-right:6px;">${it.tagLabel}</span>${esc(it.label)}
         </div>
         <button class="settlement-split-btn${s.split?' on':''}" onclick="toggleSettlementSplit('${it.key}')">÷2</button>
         <div class="settlement-cost">💰 ${fmtCost(dispCost)}${s.split?`<div style="font-size:10px;color:var(--color-text-tertiary);font-weight:400;">(${fmtCost(it.cost)})</div>`:''}</div>
@@ -903,9 +899,23 @@ function toggleSettlementSection(){settlementOpen=!settlementOpen;renderSettleme
 
 // Firebase 실시간 리스너 설정
 const _ready={tasks:false,hotels:false,flights:false,todos:false};
+function selectNearestDate(){
+  const today=dateKey(new Date());
+  const schedDates=Object.keys(SCHEDULE).sort();
+  const nearest=schedDates.find(d=>d>=today)||schedDates[schedDates.length-1];
+  selectedDate=nearest;
+  const target=new Date(nearest+'T00:00:00');
+  for(let w=0;w<3;w++){
+    const ws=getWeekStart(w);
+    const we=new Date(ws);we.setDate(ws.getDate()+6);
+    if(target>=ws&&target<=we){currentWeek=w;break;}
+  }
+}
+
 function _checkReady(){
   if(Object.values(_ready).every(v=>v)){
     document.getElementById('loading-screen').style.display='none';
+    selectNearestDate();
     renderSettlementSection();
     renderTodoSection();
     renderHotelSection();
@@ -952,6 +962,22 @@ setTimeout(()=>{
   }
 },8000);
 
+// D-day 계산
+(function(){
+  const trip=new Date(2026,8,10);
+  const today=new Date();today.setHours(0,0,0,0);
+  const diff=Math.round((trip-today)/(1000*60*60*24));
+  const el=document.getElementById('dday-display');
+  if(!el)return;
+  if(diff>0){
+    el.className='before';el.textContent=`D-${diff}`;
+  } else if(diff===0){
+    el.className='ongoing';el.textContent=`D-Day!`;
+  } else {
+    el.className='after';el.textContent=`D+${Math.abs(diff)}`;
+  }
+})();
+
 // inline onclick 핸들러들을 window에 노출
 Object.assign(window,{
   changeWeek, selectDay, openAddForm, setTag, toggleOpt, syncFormInputs,
@@ -961,7 +987,7 @@ Object.assign(window,{
   setHotelCity, syncHotelFormInputs, submitHotelForm, cancelHotelForm, selectHotelPreset,
   toggleVoucherSection, openVoucherAdd, startVoucherEdit, deleteVoucher,
   setVoucherPdf, removeVoucherPdf, submitVoucherForm, cancelVoucherForm, openVoucherPdf,
-  toggleScheduleSection, toggleSettlementSection, toggleSettlementCheck, toggleSettlementSplit,
+  toggleSettlementSection, toggleSettlementCheck, toggleSettlementSplit,
   toggleTodoSection, openTodoAdd, cancelTodoForm, syncTodoForm, setTodoPerson,
   startTodoEdit, submitTodoForm, toggleTodoDone, deleteTodo,
 });
