@@ -89,15 +89,28 @@
   .task-meta { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
   .cost-text { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; }
   .map-text { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; text-decoration: none; display: inline-block; }
-  .settlement-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); gap: 10px; }
+  .settlement-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); gap: 8px; }
   .settlement-item:last-child { border-bottom: none; }
+  .settlement-item.unchecked { opacity: 0.38; }
+  .settlement-check { width: 16px; height: 16px; cursor: pointer; accent-color: #534AB7; flex-shrink: 0; }
   .settlement-label { font-size: 13px; flex: 1; min-width: 0; }
-  .settlement-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
-  .settlement-cost { font-size: 13px; font-weight: 500; color: #993C1D; flex-shrink: 0; }
+  .settlement-split-btn { flex-shrink: 0; border: 0.5px solid var(--color-border); border-radius: 6px; padding: 3px 7px; font-size: 11px; font-weight: 600; cursor: pointer; background: none; font-family: var(--font); color: var(--color-text-tertiary); }
+  .settlement-split-btn.on { background: #534AB7; color: #fff; border-color: #534AB7; }
+  .settlement-cost { font-size: 13px; font-weight: 500; color: #993C1D; flex-shrink: 0; min-width: 80px; text-align: right; }
   .settlement-total { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 0; margin-top: 4px; border-top: 1px solid var(--color-border); }
   .settlement-total-label { font-size: 14px; font-weight: 600; }
   .settlement-total-amount { font-size: 16px; font-weight: 700; color: #993C1D; }
   .settlement-empty { text-align: center; padding: 20px; color: var(--color-text-tertiary); font-size: 13px; }
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-item.done .todo-title { text-decoration: line-through; color: var(--color-text-tertiary); }
+  .todo-item.done { opacity: 0.5; }
+  .todo-check { width: 16px; height: 16px; cursor: pointer; accent-color: #534AB7; flex-shrink: 0; }
+  .todo-title { font-size: 13px; flex: 1; min-width: 0; }
+  .todo-person-tag { font-size: 10px; font-weight: 600; border-radius: 10px; padding: 2px 7px; flex-shrink: 0; }
+  .todo-person-yeseul { background: #FBEAF0; color: #72243E; }
+  .todo-person-jungho  { background: #E6F1FB; color: #0C447C; }
+  .todo-empty { text-align: center; padding: 20px; color: var(--color-text-tertiary); font-size: 13px; }
   .task-actions { display: flex; gap: 2px; flex-shrink: 0; padding-top: 1px; }
   .icon-btn { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 4px; line-height: 1; border-radius: 4px; font-size: 14px; }
   .icon-btn.edit:hover { color: #534AB7; background: rgba(0,0,0,0.02); }
@@ -198,9 +211,9 @@
   </div>
 
   <div id="settlement-root"></div>
+  <div id="todo-root"></div>
   <div id="hotel-root"></div>
   <div id="flight-root"></div>
-  <div id="booking-root"></div>
   <div id="schedule-root"></div>
 </div>
 
@@ -263,11 +276,12 @@ let selectedDate=null, currentWeek=0, formState=null, dragSrc=null;
 let hotelFormState=null, hotelOpen=false, scheduleOpen=true;
 const VOUCHER_CFG={
   flight:{dbKey:'flights',label:'항공',icon:'ti-plane',color:'#378ADD'},
-  booking:{dbKey:'bookings',label:'예약',icon:'ti-ticket',color:'#BA7517'},
 };
-let vouchers={flight:[],booking:[]};
-let vOpen={flight:false,booking:false},vForm={flight:null,booking:null};
-let _remoteSkip={tasks:false,hotels:false,flights:false,bookings:false};
+let vouchers={flight:[]};
+let vOpen={flight:false},vForm={flight:null};
+let todos=[];
+let todoOpen=false,todoFormState=null;
+let _remoteSkip={tasks:false,hotels:false,flights:false,todos:false};
 
 function fbArr(val){
   if(!val)return [];
@@ -278,6 +292,7 @@ function showError(msg){const el=document.getElementById('firebase-error');if(el
 
 function saveTasks(){_remoteSkip.tasks=true;set(dbRef('tasks'),tasks);}
 function saveHotels(){_remoteSkip.hotels=true;set(dbRef('hotels'),hotels.length?hotels:null);}
+function saveTodos(){_remoteSkip.todos=true;set(dbRef('todos'),todos.length?todos:null);}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getWeekStart(w){const b=new Date(2026,8,8);b.setDate(b.getDate()+w*7);return b;}
 function getTag(key){return TAGS.find(t=>t.key===key)||TAGS[7];}
@@ -285,6 +300,10 @@ function fmtCost(n){if(!n&&n!==0)return '';return Number(n).toLocaleString('ko-K
 function parseCost(s){const n=parseInt(String(s).replace(/[^0-9]/g,''));return isNaN(n)?null:n;}
 function freshForm(){return {mode:'add',editIdx:null,tag:null,title:'',desc:'',cost:'',optMode:null,mapUrl:'',pdfFile:null,pdfData:null,selectedHotelIdx:null};}
 let settlementOpen=false;
+let settlementState={}; // key->{checked,split}
+function _ss(key){if(!settlementState[key])settlementState[key]={checked:true,split:false};return settlementState[key];}
+function toggleSettlementCheck(key){_ss(key).checked=!_ss(key).checked;renderSettlementSection();}
+function toggleSettlementSplit(key){_ss(key).split=!_ss(key).split;renderSettlementSection();}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escAttr(s){return String(s).replace(/"/g,'&quot;').replace(/&/g,'&amp;');}
 
@@ -778,34 +797,103 @@ function renderScheduleSection(){
 }
 function toggleScheduleSection(){scheduleOpen=!scheduleOpen;renderScheduleSection();}
 
+function renderTodoSection(){
+  const root=document.getElementById('todo-root');
+  if(!root)return;
+  const incomplete=todos.filter(t=>!t.done);
+  const complete=todos.filter(t=>t.done);
+  const sorted=[...incomplete,...complete];
+  const PERSON={yeseul:{label:'예슬',cls:'todo-person-yeseul'},jungho:{label:'정호',cls:'todo-person-jungho'}};
+  let formHtml='';
+  if(todoFormState){
+    const tf=todoFormState;
+    const personBtns=Object.entries(PERSON).map(([k,v])=>
+      `<button class="hcity-btn${tf.person===k?` sel-istanbul`:''}" style="${tf.person===k?'border-color:#534AB7;background:#7F77DD;color:#fff;font-weight:500;':''}" onclick="setTodoPerson('${k}')">${v.label}</button>`
+    ).join('');
+    formHtml=`<div style="border-top:0.5px solid var(--color-border);padding-top:12px;margin-top:4px;">
+      <div class="form-section-title">${tf.mode==='edit'?'할 일 수정':'할 일 추가'}</div>
+      <div class="field-label">할 일 <span class="field-required">*</span></div>
+      <input type="text" id="todo-title" placeholder="예: 환전하기" value="${escAttr(tf.title||'')}">
+      <div class="field-label" style="margin-bottom:8px;">담당 <span class="field-opt">(선택)</span></div>
+      <div class="tags-row" style="margin-bottom:14px;">${personBtns}</div>
+      <div class="submit-row">
+        <button class="cancel-btn" onclick="cancelTodoForm()">취소</button>
+        <button class="submit-btn" onclick="submitTodoForm()">${tf.mode==='edit'?'수정 완료':'추가'}</button>
+      </div>
+    </div>`;
+  }
+  const listHtml=todos.length===0?`<div class="todo-empty">할 일을 추가해보세요</div>`
+    :sorted.map((t,si)=>{
+      const origIdx=todos.indexOf(t);
+      const p=t.person?PERSON[t.person]:null;
+      return `<div class="todo-item${t.done?' done':''}">
+        <input class="todo-check" type="checkbox" ${t.done?'checked':''} onchange="toggleTodoDone(${origIdx})">
+        <span class="todo-title">${esc(t.title)}</span>
+        ${p?`<span class="todo-person-tag ${p.cls}">${p.label}</span>`:''}
+        <div style="display:flex;gap:2px;flex-shrink:0;">
+          <button class="icon-btn edit" onclick="startTodoEdit(${origIdx})" title="수정"><i class="ti ti-edit"></i></button>
+          <button class="icon-btn del" onclick="deleteTodo(${origIdx})" title="삭제"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  root.innerHTML=`<div class="card" style="margin-bottom:0.7rem;">
+    <div class="hotel-section-header" onclick="toggleTodoSection()">
+      <div class="hotel-section-title"><i class="ti ti-checklist" style="font-size:16px;color:#534AB7;vertical-align:-2px;"></i> 할 일</div>
+      <i class="ti ${todoOpen?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
+    </div>
+    ${todoOpen?`<div class="hotel-body">${listHtml}${!todoFormState?`<button class="add-more-btn" style="margin-bottom:0;margin-top:8px;" onclick="openTodoAdd()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 할 일 추가</button>`:''}${formHtml}</div>`:''}
+  </div>`;
+}
+function toggleTodoSection(){todoOpen=!todoOpen;renderTodoSection();}
+function openTodoAdd(){syncTodoForm();todoFormState={mode:'add',title:'',person:null};renderTodoSection();}
+function cancelTodoForm(){todoFormState=null;renderTodoSection();}
+function syncTodoForm(){if(!todoFormState)return;const el=document.getElementById('todo-title');if(el)todoFormState.title=el.value;}
+function setTodoPerson(k){syncTodoForm();if(!todoFormState)return;todoFormState.person=todoFormState.person===k?null:k;renderTodoSection();}
+function startTodoEdit(idx){const t=todos[idx];if(!t)return;todoFormState={mode:'edit',editIdx:idx,title:t.title,person:t.person||null};renderTodoSection();}
+function submitTodoForm(){
+  syncTodoForm();const tf=todoFormState;if(!tf||!tf.title.trim())return;
+  const item={title:tf.title.trim(),person:tf.person||null,done:false};
+  if(tf.mode==='edit'&&tf.editIdx!=null){item.done=todos[tf.editIdx].done;todos[tf.editIdx]=item;}
+  else{todos.push(item);}
+  todoFormState=null;saveTodos();renderTodoSection();
+}
+function toggleTodoDone(idx){if(!todos[idx])return;todos[idx].done=!todos[idx].done;saveTodos();renderTodoSection();}
+function deleteTodo(idx){todos.splice(idx,1);saveTodos();renderTodoSection();}
+
 function renderSettlementSection(){
   const root=document.getElementById('settlement-root');
   if(!root)return;
   const items=[];
-  hotels.forEach(h=>{if(h.cost!=null)items.push({label:h.name,tagLabel:'숙소',tagBg:'#E1F5EE',tagColor:'#085041',cost:h.cost});});
-  vouchers.flight.forEach(v=>{if(v.cost!=null)items.push({label:`${v.from||'?'} → ${v.to||'?'}`,tagLabel:'항공',tagBg:'#E6F1FB',tagColor:'#0C447C',cost:v.cost});});
-  vouchers.booking.forEach(v=>{if(v.cost!=null)items.push({label:v.name,tagLabel:'예약',tagBg:'#FAEEDA',tagColor:'#633806',cost:v.cost});});
+  vouchers.flight.forEach((v,i)=>{if(v.cost!=null)items.push({key:`f-${i}`,label:`${v.from||'?'} → ${v.to||'?'}`,tagLabel:'항공',tagBg:'#E6F1FB',tagColor:'#0C447C',cost:v.cost});});
+  hotels.forEach((h,i)=>{if(h.cost!=null)items.push({key:`h-${i}`,label:h.name,tagLabel:'숙소',tagBg:'#E1F5EE',tagColor:'#085041',cost:h.cost});});
   Object.keys(tasks).sort().forEach(date=>{
-    (tasks[date]||[]).forEach(t=>{
+    (tasks[date]||[]).forEach((t,i)=>{
       if(t.cost!=null){
-        const tag=getTag(t.tag); const tc=TAG_COLORS[tag.key];
-        items.push({label:t.name,tagLabel:`${tag.emoji} ${tag.label}`,tagBg:tc.bg,tagColor:tc.color,cost:t.cost});
+        const tag=getTag(t.tag);const tc=TAG_COLORS[tag.key];
+        items.push({key:`t-${date}-${i}`,label:t.name,tagLabel:`${tag.emoji} ${tag.label}`,tagBg:tc.bg,tagColor:tc.color,cost:t.cost});
       }
     });
   });
-  const total=items.reduce((s,it)=>s+it.cost,0);
+  let total=0;
   const listHtml=items.length===0
     ?`<div class="settlement-empty">지출 내역이 없어요</div>`
-    :items.map(it=>`<div class="settlement-item">
+    :items.map(it=>{
+      const s=_ss(it.key);
+      const dispCost=s.split?Math.round(it.cost/2):it.cost;
+      if(s.checked) total+=dispCost;
+      return `<div class="settlement-item${s.checked?'':' unchecked'}">
+        <input class="settlement-check" type="checkbox" ${s.checked?'checked':''} onchange="toggleSettlementCheck('${it.key}')">
         <div class="settlement-label">
           <span style="font-size:10px;font-weight:600;color:${it.tagColor};background:${it.tagBg};border-radius:3px;padding:1px 5px;margin-right:5px;">${it.tagLabel}</span>${esc(it.label)}
         </div>
-        <div class="settlement-cost">💰 ${fmtCost(it.cost)}</div>
-      </div>`).join('')
-    +`<div class="settlement-total"><span class="settlement-total-label">총 지출</span><span class="settlement-total-amount">${fmtCost(total)}</span></div>`;
+        <button class="settlement-split-btn${s.split?' on':''}" onclick="toggleSettlementSplit('${it.key}')">÷2</button>
+        <div class="settlement-cost">💰 ${fmtCost(dispCost)}${s.split?`<div style="font-size:10px;color:var(--color-text-tertiary);font-weight:400;">(${fmtCost(it.cost)})</div>`:''}</div>
+      </div>`;
+    }).join('')
+    +`<div class="settlement-total"><span class="settlement-total-label">총 지출</span><span class="settlement-total-amount">💰 ${fmtCost(total)}</span></div>`;
   root.innerHTML=`<div class="card" style="margin-bottom:0.7rem;">
     <div class="hotel-section-header" onclick="toggleSettlementSection()">
-      <div class="hotel-section-title"><i class="ti ti-receipt" style="font-size:16px;color:#993C1D;vertical-align:-2px;"></i> 정산</div>
+      <div class="hotel-section-title"><i class="ti ti-receipt" style="font-size:16px;color:#993C1D;vertical-align:-2px;"></i> 우리는 지금까지 얼마를 썼는가</div>
       <i class="ti ${settlementOpen?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
     </div>
     ${settlementOpen?`<div class="hotel-body">${listHtml}</div>`:''}
@@ -814,14 +902,14 @@ function renderSettlementSection(){
 function toggleSettlementSection(){settlementOpen=!settlementOpen;renderSettlementSection();}
 
 // Firebase 실시간 리스너 설정
-const _ready={tasks:false,hotels:false,flights:false,bookings:false};
+const _ready={tasks:false,hotels:false,flights:false,todos:false};
 function _checkReady(){
   if(Object.values(_ready).every(v=>v)){
     document.getElementById('loading-screen').style.display='none';
     renderSettlementSection();
+    renderTodoSection();
     renderHotelSection();
     renderVoucherSection('flight');
-    renderVoucherSection('booking');
     renderScheduleSection();
   }
 }
@@ -848,11 +936,11 @@ onValue(dbRef('flights'), snap=>{
   else{renderVoucherSection('flight');renderSettlementSection();}
 });
 
-onValue(dbRef('bookings'), snap=>{
-  vouchers.booking=fbArr(snap.val());
-  if(!_ready.bookings){_ready.bookings=true;_checkReady();}
-  else if(_remoteSkip.bookings){_remoteSkip.bookings=false;}
-  else{renderVoucherSection('booking');renderSettlementSection();}
+onValue(dbRef('todos'), snap=>{
+  todos=fbArr(snap.val());
+  if(!_ready.todos){_ready.todos=true;_checkReady();}
+  else if(_remoteSkip.todos){_remoteSkip.todos=false;}
+  else{renderTodoSection();}
 });
 
 // 8초 후에도 로딩 중이면 오류 표시
@@ -860,7 +948,7 @@ setTimeout(()=>{
   if(!Object.values(_ready).every(v=>v)){
     document.getElementById('loading-screen').style.display='none';
     showError('Firebase에 연결할 수 없어요. Realtime Database 규칙(Rules)에서 읽기/쓰기가 허용되어 있는지 확인해주세요.');
-    renderHotelSection();renderVoucherSection('flight');renderVoucherSection('booking');renderScheduleSection();
+    renderSettlementSection();renderTodoSection();renderHotelSection();renderVoucherSection('flight');renderScheduleSection();
   }
 },8000);
 
@@ -873,7 +961,9 @@ Object.assign(window,{
   setHotelCity, syncHotelFormInputs, submitHotelForm, cancelHotelForm, selectHotelPreset,
   toggleVoucherSection, openVoucherAdd, startVoucherEdit, deleteVoucher,
   setVoucherPdf, removeVoucherPdf, submitVoucherForm, cancelVoucherForm, openVoucherPdf,
-  toggleScheduleSection, toggleSettlementSection,
+  toggleScheduleSection, toggleSettlementSection, toggleSettlementCheck, toggleSettlementSplit,
+  toggleTodoSection, openTodoAdd, cancelTodoForm, syncTodoForm, setTodoPerson,
+  startTodoEdit, submitTodoForm, toggleTodoDone, deleteTodo,
 });
 </script>
 </body>
