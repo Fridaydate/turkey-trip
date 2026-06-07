@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>튀르키예 여행 플래너 🇹🇷</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --color-bg: #ffffff;
+    --color-bg-secondary: #f7f7f5;
+    --color-bg-tertiary: #f0eeea;
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: #6b6b6b;
+    --color-text-tertiary: #a0a0a0;
+    --color-text-info: #185FA5;
+    --color-border: rgba(0,0,0,0.10);
+    --color-border-md: rgba(0,0,0,0.10);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #1c1c1e;
+      --color-bg-secondary: #2c2c2e;
+      --color-bg-tertiary: #3a3a3c;
+      --color-text-primary: #f5f5f5;
+      --color-text-secondary: #aeaeb2;
+      --color-text-tertiary: #636366;
+      --color-text-info: #64a8e8;
+      --color-border: rgba(255,255,255,0.10);
+      --color-border-md: rgba(255,255,255,0.10);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: #F7F9FE; color: var(--color-text-primary); min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 760px; margin: 0 auto; }
+  .page-header { padding: 2.5rem 0 1.75rem; }
+  .page-icon { font-size: 64px; line-height: 1; margin-bottom: 14px; display: block; }
+  .page-title { font-size: 38px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+
+  .card { background: var(--color-bg); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 0.7rem; overflow: hidden; }
+  #loading-screen { position: fixed; inset: 0; background: #F7F9FE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; font-size: 15px; color: var(--color-text-secondary); }
+  #loading-screen .spin { width: 28px; height: 28px; border: 3px solid rgba(83,74,183,0.2); border-top-color: #534AB7; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #firebase-error { background: #FCEBEB; color: #A32D2D; font-size: 13px; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 1rem; display: none; }
+
+  .week-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 0.5px solid var(--color-border); }
+  .week-title { font-size: 15px; font-weight: 500; }
+  .week-nav button { background: none; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); padding: 4px 8px; cursor: pointer; color: var(--color-text-secondary); font-size: 15px; margin-left: 6px; font-family: var(--font); line-height: 1; }
+  .week-nav button:hover { background: rgba(0,0,0,0.02); }
+  .week-nav button:disabled { opacity: 0.3; cursor: default; }
+
+  .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 12px; }
+  .day-cell { border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 10px 8px; cursor: pointer; min-height: 82px; background: var(--color-bg); transition: border-color 0.12s, background 0.12s; }
+  .day-cell:hover { background: rgba(0,0,0,0.02); }
+  .day-cell.active { border: 0.5px solid var(--color-border); background: #EEF1FB; }
+  .day-cell.other-month { opacity: 0.3; cursor: default; pointer-events: none; }
+  .day-dow { font-size: 10px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+  .day-num { font-size: 13px; font-weight: 500; margin-bottom: 5px; }
+  .city-pill { font-size: 9px; font-weight: 500; border-radius: 4px; padding: 2px 5px; display: inline-block; line-height: 1.5; }
+  .pill-istanbul { background: #EEEDFE; color: #3C3489; }
+  .pill-cappadocia { background: #FAECE7; color: #712B13; }
+  .pill-antalya { background: #E1F5EE; color: #085041; }
+  .task-count { font-size: 10px; color: var(--color-text-tertiary); margin-top: 4px; }
+  .flight-note { font-size: 9px; color: var(--color-text-secondary); margin-top: 3px; border-top: 0.5px solid var(--color-border); padding-top: 3px; }
+
+  .detail-header { padding: 14px 20px; }
+  .detail-title { font-size: 16px; font-weight: 500; }
+  .detail-sub { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+  .detail-body { padding: 16px 20px; }
+  .no-day { text-align: center; padding: 40px 20px; color: var(--color-text-tertiary); font-size: 14px; }
+  .no-day i { font-size: 28px; display: block; margin: 0 auto 8px; }
+
+  .task-list { margin-bottom: 12px; }
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 16px; border: 0.5px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 6px; background: var(--color-bg); cursor: default; }
+  .task-item.dragging { opacity: 0.4; }
+  .task-item.drag-over { border-color: #534AB7; border-style: dashed; }
+  .drag-handle { color: var(--color-text-tertiary); font-size: 14px; cursor: grab; padding-top: 2px; flex-shrink: 0; }
+  .task-tag-badge { font-size: 10px; border-radius: 3px; padding: 2px 6px; display: inline-block; margin-bottom: 3px; font-weight: 500; }
+  .task-name-text { font-size: 15px; line-height: 1.4; font-weight: 500; }
+  .no-task-empty { text-align: center; padding: 32px 20px 8px; color: var(--color-text-tertiary); font-size: 14px; }
+  .no-task-empty i { font-size: 28px; display: block; margin: 0 auto 8px; }
+  .add-task-cta-btn { display: block; width: 100%; padding: 9px; font-size: 13px; font-weight: 400; color: var(--color-text-secondary); background: none; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); text-align: center; margin-bottom: 16px; }
+  .add-task-cta-btn:hover { background: rgba(0,0,0,0.02); }
+  .task-desc-text { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-top: 3px; white-space: pre-wrap; }
+  .task-link { font-size: 11px; color: var(--color-text-info); text-decoration: none; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .task-actions { display: flex; gap: 2px; flex-shrink: 0; padding-top: 1px; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 4px; line-height: 1; border-radius: 4px; font-size: 14px; }
+  .icon-btn.edit:hover { color: #534AB7; background: rgba(0,0,0,0.02); }
+  .icon-btn.del:hover { color: #A32D2D; background: rgba(0,0,0,0.02); }
+
+  .add-more-btn { width: 100%; background: none; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 9px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; margin-bottom: 16px; font-family: var(--font); }
+  .add-more-btn:hover { background: rgba(0,0,0,0.02); }
+
+  .add-section { border-top: 0.5px solid var(--color-border); padding-top: 16px; }
+  .form-section-title { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+  .field-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px; }
+  .field-required { color: #993C1D; }
+  .field-opt { color: var(--color-text-tertiary); font-weight: 400; }
+
+  input[type="text"], input[type="url"] {
+    width: 100%; font-size: 13px; padding: 8px 10px; border: 0.5px solid var(--color-border-md);
+    border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-primary);
+    font-family: var(--font); outline: none; margin-bottom: 14px;
+  }
+  input[type="text"]:focus, input[type="url"]:focus { border-color: #534AB7; box-shadow: 0 0 0 2px rgba(83,74,183,0.12); }
+  input::placeholder { color: var(--color-text-tertiary); }
+
+  .desc-textarea {
+    width: 100%; font-size: 13px; resize: vertical; min-height: 76px; padding: 8px 10px;
+    border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md);
+    background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font);
+    line-height: 1.6; margin-bottom: 14px; outline: none;
+  }
+  .desc-textarea:focus { border-color: #534AB7; box-shadow: 0 0 0 2px rgba(83,74,183,0.12); }
+  .desc-textarea::placeholder { color: var(--color-text-tertiary); }
+
+  .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tag-btn { border: none; border-radius: 20px; padding: 5px 11px; font-size: 12px; cursor: pointer; background: rgba(0,0,0,0.04); color: var(--color-text-secondary); font-family: var(--font); transition: all 0.12s; }
+  .tag-btn:hover { background: rgba(0,0,0,0.02); }
+  .tag-btn.sel-food     { border-color: #993C1D; background: #D85A30; color: #fff; font-weight: 500; }
+  .tag-btn.sel-cafe     { border-color: #854F0B; background: #BA7517; color: #fff; font-weight: 500; }
+  .tag-btn.sel-shopping { border-color: #993556; background: #D4537E; color: #fff; font-weight: 500; }
+  .tag-btn.sel-tour     { border-color: #534AB7; background: #7F77DD; color: #fff; font-weight: 500; }
+  .tag-btn.sel-activity { border-color: #3B6D11; background: #639922; color: #fff; font-weight: 500; }
+  .tag-btn.sel-move     { border-color: #185FA5; background: #378ADD; color: #fff; font-weight: 500; }
+  .tag-btn.sel-hotel    { border-color: #0F6E56; background: #1D9E75; color: #fff; font-weight: 500; }
+  .tag-btn.sel-etc      { border-color: #5F5E5A; background: #888780; color: #fff; font-weight: 500; }
+
+  .optional-row { display: flex; gap: 8px; margin-bottom: 0; }
+  .opt-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 9px 8px; cursor: pointer; font-size: 12px; color: var(--color-text-secondary); background: none; font-family: var(--font); }
+  .opt-btn:hover { background: rgba(0,0,0,0.02); }
+  .opt-btn.selected { border: 0.5px solid #AFA9EC; background: #EEEDFE; color: #3C3489; }
+  .optional-fields { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 12px; margin-top: 8px; }
+  .optional-fields input { margin-bottom: 0; }
+  .pdf-upload-label { display: flex; align-items: center; gap: 8px; border: 0.5px dashed var(--color-border-md); border-radius: var(--radius-md); padding: 10px 14px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); background: var(--color-bg); }
+  .pdf-upload-label:hover { background: rgba(0,0,0,0.02); }
+  .pdf-upload-label input { display: none; }
+  .pdf-attached { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); margin-top: 6px; }
+  .attach-remove { font-size: 11px; color: var(--color-text-tertiary); cursor: pointer; text-decoration: underline; }
+
+  .submit-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .cancel-btn { padding: 0 16px; height: 36px; font-size: 13px; background: none; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); cursor: pointer; color: var(--color-text-secondary); font-family: var(--font); }
+  .cancel-btn:hover { background: rgba(0,0,0,0.02); }
+  .submit-btn { padding: 0 20px; height: 36px; font-size: 13px; font-weight: 500; background: #534AB7; color: #fff; border: none; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); }
+  .submit-btn:hover { background: rgba(0,0,0,0.02); filter: brightness(0.94); }
+  .submit-btn:active { transform: scale(0.98); }
+
+  .hotel-section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; }
+  .hotel-section-header:hover { background: rgba(0,0,0,0.02); }
+  .hotel-section-title { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .hotel-toggle { font-size: 12px; color: var(--color-text-tertiary); }
+  .hotel-tabs { display: flex; border-top: 0.5px solid var(--color-border); border-bottom: 0.5px solid var(--color-border); }
+  .hotel-tab { flex: 1; padding: 9px 8px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--color-text-secondary); border-bottom: 2px solid transparent; font-family: var(--font); transition: color 0.12s; }
+  .hotel-tab:hover { color: var(--color-text-primary); background: rgba(0,0,0,0.02); }
+  .hotel-tab.active { color: #1D9E75; border-bottom-color: #1D9E75; font-weight: 500; background: var(--color-bg-secondary); }
+  .hotel-body { padding: 12px 16px; }
+  .hotel-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 0.5px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 8px; background: var(--color-bg); }
+  .hotel-item-info { flex: 1; min-width: 0; }
+  .hotel-item-name { font-size: 13px; font-weight: 500; }
+  .hotel-item-address { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .hotel-item-dates { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
+  .hotel-item-actions { display: flex; gap: 2px; flex-shrink: 0; padding-top: 1px; }
+  .hotel-empty { text-align: center; padding: 14px; color: var(--color-text-tertiary); font-size: 13px; }
+  .hotel-picker { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 14px; border: 0.5px solid var(--color-border); }
+  .hotel-picker-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: 500; }
+  .hotel-pick-list { display: flex; gap: 6px; flex-wrap: wrap; }
+  .hotel-pick-card { border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); padding: 7px 10px; cursor: pointer; background: var(--color-bg); transition: all 0.12s; }
+  .hotel-pick-card:hover { background: rgba(0,0,0,0.02); }
+  .hotel-pick-card.selected { border-color: #1D9E75; background: #E1F5EE; }
+  .hcity-btn { border: none; border-radius: 20px; padding: 5px 11px; font-size: 12px; cursor: pointer; background: rgba(0,0,0,0.04); color: var(--color-text-secondary); font-family: var(--font); transition: all 0.12s; }
+  .hcity-btn.sel-istanbul  { border-color: #534AB7; background: #7F77DD; color: #fff; font-weight: 500; }
+  .hcity-btn.sel-cappadocia { border-color: #712B13; background: #D85A30; color: #fff; font-weight: 500; }
+  .hcity-btn.sel-antalya  { border-color: #085041; background: #1D9E75; color: #fff; font-weight: 500; }
+</style>
+</head>
+<body>
+<div id="loading-screen"><div class="spin"></div>데이터 불러오는 중…</div>
+<div class="container">
+  <div id="firebase-error"></div>
+  <div class="page-header">
+    <span class="page-icon">🇹🇷</span>
+    <h1 class="page-title">튀르키예 여행</h1>
+  </div>
+
+  <div id="hotel-root"></div>
+  <div id="flight-root"></div>
+  <div id="booking-root"></div>
+  <div id="schedule-root"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+
+const DAYS=['일','월','화','수','목','금','토'];
+const SCHEDULE={
+  '2026-09-10':{city:'이스탄불',note:'인천 출발 ✈'},
+  '2026-09-11':{city:'이스탄불'},'2026-09-12':{city:'이스탄불'},
+  '2026-09-13':{city:'이스탄불',note:'카파도키아로 이동 →'},
+  '2026-09-14':{city:'카파도키아'},'2026-09-15':{city:'카파도키아'},
+  '2026-09-16':{city:'카파도키아'},
+  '2026-09-17':{city:'카파도키아',note:'안탈리아로 이동 →'},
+  '2026-09-18':{city:'안탈리아'},'2026-09-19':{city:'안탈리아'},
+  '2026-09-20':{city:'안탈리아'},
+  '2026-09-21':{city:'안탈리아',note:'이스탄불로 이동 →'},
+  '2026-09-22':{city:'이스탄불'},
+  '2026-09-23':{city:'이스탄불',note:'귀국 ✈'},
+};
+const CITY_PILL={'이스탄불':'pill-istanbul','카파도키아':'pill-cappadocia','안탈리아':'pill-antalya'};
+const TAGS=[
+  {key:'food',label:'밥',emoji:'🍽️'},
+  {key:'cafe',label:'카페',emoji:'☕'},
+  {key:'shopping',label:'쇼핑',emoji:'🛍️'},
+  {key:'tour',label:'관광',emoji:'🏛️'},
+  {key:'activity',label:'액티비티',emoji:'🪂'},
+  {key:'move',label:'이동',emoji:'🚌'},
+  {key:'hotel',label:'숙소',emoji:'🏨'},
+  {key:'etc',label:'기타',emoji:'✏️'},
+];
+const TAG_COLORS={
+  food:{bg:'#FAECE7',color:'#712B13'},
+  cafe:{bg:'#FAEEDA',color:'#633806'},
+  shopping:{bg:'#FBEAF0',color:'#72243E'},
+  tour:{bg:'#EEEDFE',color:'#3C3489'},
+  activity:{bg:'#EAF3DE',color:'#27500A'},
+  move:{bg:'#E6F1FB',color:'#0C447C'},
+  hotel:{bg:'#E1F5EE',color:'#085041'},
+  etc:{bg:'#F1EFE8',color:'#444441'},
+};
+
+const app = initializeApp({
+  apiKey:            "AIzaSyAsoauNCa3z9DCCE2VpwSM3IIREoooywU8",
+  authDomain:        "turkey-trip-2609.firebaseapp.com",
+  databaseURL:       "https://turkey-trip-2609-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "turkey-trip-2609",
+  storageBucket:     "turkey-trip-2609.firebasestorage.app",
+  messagingSenderId: "890893341737",
+  appId:             "1:890893341737:web:1b0633223f6c0b4950b838"
+});
+const db = getDatabase(app);
+const dbRef = (path) => ref(db, path);
+
+const CITIES=['이스탄불','카파도키아','안탈리아'];
+let tasks = {};
+let hotels = [];
+let selectedDate=null, currentWeek=0, formState=null, dragSrc=null;
+let hotelFormState=null, hotelOpen=false, scheduleOpen=true;
+const VOUCHER_CFG={
+  flight:{dbKey:'flights',label:'항공',icon:'ti-plane',color:'#378ADD'},
+  booking:{dbKey:'bookings',label:'예약',icon:'ti-ticket',color:'#BA7517'},
+};
+let vouchers={flight:[],booking:[]};
+let vOpen={flight:false,booking:false},vForm={flight:null,booking:null};
+let _remoteSkip={tasks:false,hotels:false,flights:false,bookings:false};
+
+function fbArr(val){
+  if(!val)return [];
+  if(Array.isArray(val))return val;
+  return Object.keys(val).sort((a,b)=>Number(a)-Number(b)).map(k=>val[k]);
+}
+function showError(msg){const el=document.getElementById('firebase-error');if(el){el.textContent=msg;el.style.display='block';}}
+
+function saveTasks(){_remoteSkip.tasks=true;set(dbRef('tasks'),tasks);}
+function saveHotels(){_remoteSkip.hotels=true;set(dbRef('hotels'),hotels.length?hotels:null);}
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getWeekStart(w){const b=new Date(2026,8,8);b.setDate(b.getDate()+w*7);return b;}
+function getTag(key){return TAGS.find(t=>t.key===key)||TAGS[7];}
+function freshForm(){return {mode:'add',editIdx:null,tag:null,title:'',desc:'',optMode:null,mapUrl:'',pdfFile:null,pdfData:null,selectedHotelIdx:null};}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(s){return String(s).replace(/"/g,'&quot;').replace(/&/g,'&amp;');}
+
+function renderCal(){
+  const root=document.getElementById('cal-root');
+  if(!root)return;
+  const ws=getWeekStart(currentWeek);
+  const weeks=['1주차 (9/8–14)','2주차 (9/15–21)','3주차 (9/22–28)'];
+  let h=`<div class="week-header">
+    <div class="week-title">2026년 9월 <span style="color:var(--color-text-secondary);font-weight:400;font-size:13px;">${weeks[currentWeek]}</span></div>
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)"${currentWeek===0?' disabled':''}><i class="ti ti-chevron-left"></i></button>
+      <button onclick="changeWeek(1)"${currentWeek===2?' disabled':''}><i class="ti ti-chevron-right"></i></button>
+    </div>
+  </div><div class="cal-week">`;
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    const key=dateKey(d);
+    const sch=SCHEDULE[key];
+    const tripStart=new Date(2026,8,10),tripEnd=new Date(2026,8,23);
+    const inRange=d>=tripStart&&d<=tripEnd;
+    const isActive=selectedDate===key;
+    const tc=(tasks[key]||[]).length;
+    const pill=sch?CITY_PILL[sch.city]:'';
+    h+=`<div class="day-cell${isActive?' active':''}${!inRange?' other-month':''}" onclick="${inRange?`selectDay('${key}')`:''}">
+      <div class="day-dow">${DAYS[d.getDay()]}</div>
+      <div class="day-num">${d.getDate()}</div>
+      ${sch?`<span class="city-pill ${pill}">${sch.city}</span>`:''}
+      ${tc>0?`<div class="task-count"><i class="ti ti-check" style="font-size:10px"></i> ${tc}</div>`:''}
+      ${sch&&sch.note?`<div class="flight-note">${sch.note}</div>`:''}
+    </div>`;
+  }
+  h+='</div>';
+  root.innerHTML=h;
+}
+
+function buildForm(f,hasTasks){
+  const isEdit=f.mode==='edit';
+  const tagBtns=TAGS.map(t=>{
+    const isSel=f.tag===t.key;
+    return `<button class="tag-btn${isSel?` sel-${t.key}`:''}" onclick="setTag('${t.key}')">${t.emoji} ${t.label}</button>`;
+  }).join('');
+  let optFields='';
+  if(f.optMode==='map'){
+    optFields=`<div class="optional-fields">
+      <input type="url" id="inp-map-url" placeholder="구글 맵 링크" value="${escAttr(f.mapUrl||'')}">
+    </div>`;
+  } else if(f.optMode==='pdf'){
+    optFields=`<div class="optional-fields">
+      <label class="pdf-upload-label">
+        <i class="ti ti-upload" style="font-size:16px"></i>
+        <span>${f.pdfFile||'PDF 파일 선택'}</span>
+        <input type="file" accept=".pdf" onchange="setPdf(event)">
+      </label>
+      ${f.pdfFile?`<div class="pdf-attached"><i class="ti ti-file" style="font-size:11px;vertical-align:-1px"></i> ${esc(f.pdfFile)} ${f.pdfData?`<span class="attach-remove" style="color:var(--color-text-info);" onclick="openPdfData(formState.pdfData)">열기</span> `:''}<span class="attach-remove" onclick="removePdf()">삭제</span></div>`:''}
+    </div>`;
+  }
+  let hotelPickerHtml='';
+  if(f.tag==='hotel'&&hotels.length>0){
+    const cards=hotels.map((h,i)=>{
+      const isSel=f.selectedHotelIdx===i;
+      const pill=h.city?CITY_PILL[h.city]:'';
+      return `<div class="hotel-pick-card${isSel?' selected':''}" onclick="selectHotelPreset(${i})">${h.city?`<span class="city-pill ${pill}" style="font-size:9px;margin-bottom:3px;display:block;">${esc(h.city)}</span>`:''}<div style="font-size:13px;">${esc(h.name)}</div></div>`;
+    }).join('');
+    hotelPickerHtml=`<div class="hotel-picker"><div class="hotel-picker-label">저장된 숙소에서 선택</div><div class="hotel-pick-list">${cards}</div></div>`;
+  }
+  const cancelBtn=(hasTasks||isEdit)?`<button class="cancel-btn" onclick="cancelForm()">취소</button>`:'';
+  return `<div class="${(hasTasks||isEdit)?'add-section':''}">
+    <div style="background:#fff;border:0.5px solid var(--color-border);border-radius:var(--radius-md);padding:14px 16px;">
+    <div class="form-section-title">${isEdit?'일정 수정':'일정'}</div>
+    <div class="field-label" style="margin-bottom:8px;">태그 <span class="field-opt">(선택)</span></div>
+    <div class="tags-row">${tagBtns}</div>
+    ${hotelPickerHtml}
+    <div class="field-label">제목 <span class="field-required">*</span></div>
+    <input type="text" id="inp-title" placeholder="이 날은 뭘 해보면 좋을까?🤩" value="${escAttr(f.title||'')}" onkeydown="if(event.key==='Enter')submitForm()">
+    <div class="field-label">설명 <span class="field-opt">(선택)</span></div>
+    <textarea class="desc-textarea" id="inp-desc" placeholder="팁이나 메모를 남겨보세요 ✍️">${esc(f.desc||'')}</textarea>
+    <div class="field-label" style="margin-bottom:8px;">첨부 <span class="field-opt">(선택)</span></div>
+    <div class="optional-row">
+      <button class="opt-btn${f.optMode==='map'?' selected':''}" onclick="toggleOpt('map')"><i class="ti ti-map-pin" style="font-size:15px"></i>구글 맵 링크</button>
+      <button class="opt-btn${f.optMode==='pdf'?' selected':''}" onclick="toggleOpt('pdf')"><i class="ti ti-file" style="font-size:15px"></i>PDF 첨부</button>
+    </div>
+    ${optFields}
+    <div class="submit-row">
+      ${cancelBtn}
+      <button class="submit-btn" onclick="submitForm()">${isEdit?'수정 완료':'등록'}</button>
+    </div>
+    </div>
+  </div>`;
+}
+
+function renderDetail(){
+  const root=document.getElementById('detail-root');
+  if(!root)return;
+  if(!selectedDate){
+    root.innerHTML=`<div class="no-day"><i class="ti ti-calendar"></i>날짜를 클릭하면 상세 일정이 표시됩니다</div>`;
+    return;
+  }
+  const d=new Date(selectedDate+'T00:00:00');
+  const sch=SCHEDULE[selectedDate];
+  const dayTasks=tasks[selectedDate]||[];
+  const pill=sch?CITY_PILL[sch.city]:'';
+  const hasTasks=dayTasks.length>0;
+  const f=formState;
+
+  let taskHtml='';
+  if(hasTasks){
+    taskHtml='<div class="task-list" id="task-list">';
+    dayTasks.forEach((t,i)=>{
+      const tag=getTag(t.tag);
+      const tc=TAG_COLORS[tag.key];
+      let extra='';
+      if(t.desc) extra+=`<div class="task-desc-text">${esc(t.desc)}</div>`;
+      if(t.mapUrl) extra+=`<a class="task-link" href="${escAttr(t.mapUrl)}" target="_blank" style="font-size:12px;color:var(--color-text-info);text-decoration:underline;margin-top:3px;display:inline-block;">지도 보기</a>`;
+      if(t.pdf) extra+=`<div class="task-meta"><i class="ti ti-paperclip" style="font-size:11px;vertical-align:-1px"></i> ${esc(t.pdf)}${t.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openTaskPdf(${i})">열기</span>`:''}</div>`;
+      taskHtml+=`<div class="task-item" draggable="true" data-idx="${i}"
+        ondragstart="onDragStart(event,${i})"
+        ondragover="onDragOver(event)"
+        ondrop="onDrop(event,${i})"
+        ondragend="onDragEnd()">
+        <div style="flex:1;min-width:0;">
+          <span class="task-tag-badge" style="background:${tc.bg};color:${tc.color};">${tag.emoji} ${tag.label}</span>
+          <div class="task-name-text">${esc(t.name)}</div>
+          ${extra}
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn edit" onclick="startEdit(${i})" title="수정"><i class="ti ti-edit"></i></button>
+          <button class="icon-btn del" onclick="deleteTask(${i})" title="삭제"><i class="ti ti-trash"></i></button>
+        </div>
+        <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
+      </div>`;
+    });
+    taskHtml+='</div>';
+  }
+
+  let bottomHtml='';
+  if(f){
+    bottomHtml=buildForm(f,hasTasks);
+  } else if(hasTasks){
+    bottomHtml=`<button class="add-more-btn" onclick="openAddForm()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 일정 추가</button>`;
+  } else {
+    bottomHtml=`<div class="no-task-empty"><i class="ti ti-calendar-event"></i>일정이 없어요</div>
+      <button class="add-task-cta-btn" onclick="openAddForm()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 일정 추가</button>`;
+  }
+
+  root.innerHTML=`<div style="background:#EEF1FB;">
+    <div class="detail-header">
+      <div class="detail-title">9월 ${d.getDate()}일 (${DAYS[d.getDay()]})${sch?` <span class="city-pill ${pill}" style="font-size:11px;vertical-align:2px;">${sch.city}</span>`:''}</div>
+      ${sch&&sch.note?`<div class="detail-sub">${sch.note}</div>`:''}
+    </div>
+    <div class="detail-body">
+      ${taskHtml}
+      ${bottomHtml}
+    </div>
+  </div>`;
+}
+
+function syncFormInputs(){
+  if(!formState)return;
+  const t=document.getElementById('inp-title'); if(t) formState.title=t.value;
+  const de=document.getElementById('inp-desc'); if(de) formState.desc=de.value;
+  const u=document.getElementById('inp-map-url'); if(u) formState.mapUrl=u.value;
+}
+function setTag(key){ syncFormInputs(); if(!formState)formState=freshForm(); formState.tag=formState.tag===key?null:key; renderDetail(); }
+function toggleOpt(mode){ syncFormInputs(); if(!formState)formState=freshForm(); formState.optMode=formState.optMode===mode?null:mode; renderDetail(); }
+function setPdf(e){ const f=e.target.files[0]; if(!f)return; if(!formState)formState=freshForm(); const r=new FileReader(); r.onload=ev=>{formState.pdfFile=f.name;formState.pdfData=ev.target.result;renderDetail();}; r.readAsDataURL(f); }
+function removePdf(){ if(formState){formState.pdfFile=null;formState.pdfData=null;} renderDetail(); }
+function openAddForm(){ formState=freshForm(); renderDetail(); }
+function cancelForm(){ formState=null; renderDetail(); }
+function startEdit(idx){
+  const t=tasks[selectedDate][idx];
+  formState={mode:'edit',editIdx:idx,tag:t.tag||null,title:t.name,desc:t.desc||'',optMode:t.mapUrl?'map':t.pdf?'pdf':null,mapUrl:t.mapUrl||'',pdfFile:t.pdf||null,pdfData:t.pdfData||null,selectedHotelIdx:null};
+  renderDetail();
+}
+function submitForm(){
+  syncFormInputs();
+  const f=formState;
+  if(!f||!f.title||!f.title.trim())return;
+  const item={name:f.title.trim(),tag:f.tag||null};
+  if(f.desc&&f.desc.trim()) item.desc=f.desc.trim();
+  if(f.optMode==='map'&&f.mapUrl) item.mapUrl=f.mapUrl;
+  if(f.optMode==='pdf'&&f.pdfFile){item.pdf=f.pdfFile;if(f.pdfData)item.pdfData=f.pdfData;}
+  if(!tasks[selectedDate]) tasks[selectedDate]=[];
+  if(f.mode==='edit'&&f.editIdx!=null){ tasks[selectedDate][f.editIdx]=item; }
+  else { tasks[selectedDate].push(item); }
+  formState=null;
+  saveTasks();
+  renderCal(); renderDetail();
+}
+function deleteTask(idx){
+  tasks[selectedDate].splice(idx,1);
+  if(formState&&formState.mode==='edit'&&formState.editIdx===idx) formState=null;
+  saveTasks(); renderCal(); renderDetail();
+}
+function selectDay(key){ selectedDate=key; formState=null; renderCal(); renderDetail(); }
+function changeWeek(dir){ currentWeek=Math.max(0,Math.min(2,currentWeek+dir)); renderCal(); }
+function onDragStart(e,idx){ dragSrc=idx; setTimeout(()=>e.target.classList.add('dragging'),0); }
+function onDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragEnd(){ document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('dragging','drag-over')); }
+function onDrop(e,idx){
+  e.preventDefault();
+  if(dragSrc===null||dragSrc===idx)return;
+  const arr=tasks[selectedDate];
+  const moved=arr.splice(dragSrc,1)[0];
+  arr.splice(idx,0,moved);
+  dragSrc=null;
+  saveTasks(); renderCal(); renderDetail();
+}
+
+function renderHotelSection(){
+  const root=document.getElementById('hotel-root');
+  let listHtml='';
+  if(hotels.length===0){
+    listHtml=`<div class="hotel-empty">저장된 숙소가 없어요.</div>`;
+  } else {
+    listHtml=hotels.map((h,i)=>{
+      const pill=h.city?CITY_PILL[h.city]:'';
+      return `<div class="hotel-item">
+        <div class="hotel-item-info">
+          ${h.city?`<span class="city-pill ${pill}" style="font-size:9px;margin-bottom:4px;display:inline-block;">${esc(h.city)}</span>`:''}
+          <div class="hotel-item-name">${esc(h.name)}</div>
+          ${h.desc?`<div class="hotel-item-address">${esc(h.desc)}</div>`:''}
+          ${h.mapUrl?`<a href="${escAttr(h.mapUrl)}" target="_blank" style="display:inline-flex;align-items:center;gap:3px;margin-top:4px;padding:2px 7px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-size:11px;font-weight:500;text-decoration:none;"><i class="ti ti-map-pin" style="font-size:10px;"></i>지도 보기</a>`:''}
+        </div>
+        <div class="hotel-item-actions">
+          <button class="icon-btn edit" onclick="startHotelEdit(${i})" title="수정"><i class="ti ti-edit"></i></button>
+          <button class="icon-btn del" onclick="deleteHotel(${i})" title="삭제"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  let formHtml='';
+  if(hotelFormState){
+    const hf=hotelFormState;
+    const cityBtns=CITIES.map(c=>{
+      const key=c==='이스탄불'?'istanbul':c==='카파도키아'?'cappadocia':'antalya';
+      return `<button class="hcity-btn${hf.city===c?` sel-${key}`:''}" onclick="setHotelCity('${c}')">${c}</button>`;
+    }).join('');
+    formHtml=`<div style="border-top:0.5px solid var(--color-border);padding-top:12px;margin-top:4px;">
+      <div class="form-section-title">${hf.mode==='edit'?'숙소 수정':'숙소 추가'}</div>
+      <div class="field-label">숙소 이름 <span class="field-required">*</span></div>
+      <input type="text" id="h-name" placeholder="예: 그랜드 바자르 호텔" value="${escAttr(hf.name)}">
+      <div class="field-label">구글 맵 링크 <span class="field-opt">(선택)</span></div>
+      <input type="url" id="h-mapUrl" placeholder="https://maps.google.com/..." value="${escAttr(hf.mapUrl)}">
+      <div class="field-label">설명 <span class="field-opt">(선택)</span></div>
+      <input type="text" id="h-desc" placeholder="예: 조식 포함, 조용한 위치" value="${escAttr(hf.desc)}" style="margin-bottom:10px;">
+      <div class="field-label" style="margin-bottom:8px;">지역 <span class="field-opt">(선택)</span></div>
+      <div class="tags-row" style="margin-bottom:0;">${cityBtns}</div>
+      <div class="submit-row">
+        <button class="cancel-btn" onclick="cancelHotelForm()">취소</button>
+        <button class="submit-btn" onclick="submitHotelForm()">${hf.mode==='edit'?'수정 완료':'저장'}</button>
+      </div>
+    </div>`;
+  }
+  const bodyHtml=hotelOpen?`<div class="hotel-body">
+    ${listHtml}
+    ${!hotelFormState?`<button class="add-more-btn" style="margin-bottom:0;" onclick="openHotelAdd()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 숙소 추가</button>`:''}
+    ${formHtml}
+  </div>`:'';
+  root.innerHTML=`<div class="card" style="margin-bottom:1rem;">
+    <div class="hotel-section-header" onclick="toggleHotelSection()">
+      <div class="hotel-section-title"><i class="ti ti-building" style="font-size:16px;color:#1D9E75;vertical-align:-2px;"></i> 숙소</div>
+      <i class="ti ${hotelOpen?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
+    </div>
+    ${bodyHtml}
+  </div>`;
+}
+function toggleHotelSection(){hotelOpen=!hotelOpen;renderHotelSection();}
+function openHotelAdd(){hotelFormState={mode:'add',editIdx:null,name:'',mapUrl:'',desc:'',city:null};renderHotelSection();}
+function cancelHotelForm(){hotelFormState=null;renderHotelSection();}
+function setHotelCity(city){syncHotelFormInputs();hotelFormState.city=hotelFormState.city===city?null:city;renderHotelSection();}
+function syncHotelFormInputs(){
+  if(!hotelFormState)return;
+  ['name','mapUrl','desc'].forEach(f=>{const el=document.getElementById(`h-${f}`);if(el)hotelFormState[f]=el.value;});
+}
+function startHotelEdit(idx){
+  const h=hotels[idx];if(!h)return;
+  hotelFormState={mode:'edit',editIdx:idx,name:h.name,mapUrl:h.mapUrl||'',desc:h.desc||'',city:h.city||null};
+  renderHotelSection();
+}
+function submitHotelForm(){
+  syncHotelFormInputs();
+  const hf=hotelFormState;
+  if(!hf||!hf.name.trim())return;
+  const item={name:hf.name.trim()};
+  if(hf.mapUrl.trim())item.mapUrl=hf.mapUrl.trim();
+  if(hf.desc.trim())item.desc=hf.desc.trim();
+  if(hf.city)item.city=hf.city;
+  if(hf.mode==='edit'&&hf.editIdx!=null){hotels[hf.editIdx]=item;}
+  else{hotels.push(item);}
+  hotelFormState=null;
+  saveHotels();renderHotelSection();renderDetail();
+}
+function deleteHotel(idx){
+  hotels.splice(idx,1);
+  saveHotels();renderHotelSection();renderDetail();
+}
+function selectHotelPreset(idx){
+  if(!formState)return;
+  const h=hotels[idx];if(!h)return;
+  syncFormInputs();
+  formState.title=h.name;
+  formState.selectedHotelIdx=idx;
+  if(h.mapUrl){formState.mapUrl=h.mapUrl;formState.optMode='map';}
+  renderDetail();
+}
+
+function saveVouchers(type){const key=VOUCHER_CFG[type].dbKey;_remoteSkip[key]=true;set(dbRef(key),vouchers[type].length?vouchers[type]:null);}
+function renderVoucherSection(type){
+  const cfg=VOUCHER_CFG[type];
+  const root=document.getElementById(`${type}-root`);
+  const list=vouchers[type];
+  const open=vOpen[type];
+  const form=vForm[type];
+  let listHtml='';
+  if(list.length===0){
+    listHtml=`<div class="hotel-empty">저장된 ${cfg.label} 바우처가 없어요.</div>`;
+  } else if(type==='flight'){
+    listHtml=list.map((item,i)=>`<div class="hotel-item">
+      <div class="hotel-item-info">
+        <div class="hotel-item-name" style="font-size:14px;letter-spacing:-0.01em;">${esc(item.from||'?')} → ${esc(item.to||'?')}</div>
+        ${(item.departDate||item.arriveDate)?`<div class="hotel-item-dates">${item.departDate?esc(item.departDate):''}${item.departDate&&item.arriveDate?' → ':''}${item.arriveDate?esc(item.arriveDate):''}</div>`:''}
+        ${item.pdf?`<div class="hotel-item-dates"><i class="ti ti-paperclip" style="font-size:10px;vertical-align:-1px"></i> ${esc(item.pdf)}${item.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openVoucherPdf('flight',${i})">열기</span>`:''}</div>`:''}
+      </div>
+      <div class="hotel-item-actions">
+        <button class="icon-btn edit" onclick="startVoucherEdit('flight',${i})" title="수정"><i class="ti ti-edit"></i></button>
+        <button class="icon-btn del" onclick="deleteVoucher('flight',${i})" title="삭제"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+  } else {
+    listHtml=list.map((item,i)=>`<div class="hotel-item">
+      <div class="hotel-item-info">
+        <div class="hotel-item-name">${esc(item.name)}</div>
+        ${item.date?`<div class="hotel-item-dates">${esc(item.date)}</div>`:''}
+        ${item.desc?`<div class="hotel-item-address">${esc(item.desc)}</div>`:''}
+        ${item.pdf?`<div class="hotel-item-dates"><i class="ti ti-paperclip" style="font-size:10px;vertical-align:-1px"></i> ${esc(item.pdf)}${item.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openVoucherPdf('${type}',${i})">열기</span>`:''}</div>`:''}
+      </div>
+      <div class="hotel-item-actions">
+        <button class="icon-btn edit" onclick="startVoucherEdit('${type}',${i})" title="수정"><i class="ti ti-edit"></i></button>
+        <button class="icon-btn del" onclick="deleteVoucher('${type}',${i})" title="삭제"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+  }
+  let formHtml='';
+  if(form){
+    if(type==='flight'){
+      formHtml=`<div style="border-top:0.5px solid var(--color-border);padding-top:12px;margin-top:4px;">
+        <div class="form-section-title">${form.mode==='edit'?'항공 수정':'항공 추가'}</div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;min-width:0;"><div class="field-label">출발지 <span class="field-required">*</span></div><input type="text" id="v-flight-from" placeholder="예: 인천 (ICN)" value="${escAttr(form.from)}"></div>
+          <div style="flex:1;min-width:0;"><div class="field-label">도착지 <span class="field-required">*</span></div><input type="text" id="v-flight-to" placeholder="예: 이스탄불 (IST)" value="${escAttr(form.to)}"></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;min-width:0;"><div class="field-label">출발일 <span class="field-opt">(선택)</span></div><input type="text" id="v-flight-departDate" placeholder="예: 9/10 06:00" value="${escAttr(form.departDate)}"></div>
+          <div style="flex:1;min-width:0;"><div class="field-label">도착일 <span class="field-opt">(선택)</span></div><input type="text" id="v-flight-arriveDate" placeholder="예: 9/10 12:30" value="${escAttr(form.arriveDate)}"></div>
+        </div>
+        <div class="field-label" style="margin-bottom:6px;">PDF 바우처 <span class="field-opt">(선택)</span></div>
+        <label class="pdf-upload-label" style="margin-bottom:${form.pdf?'6px':'0'};">
+          <i class="ti ti-upload" style="font-size:15px"></i>
+          <span>${form.pdf||'PDF 파일 선택'}</span>
+          <input type="file" accept=".pdf" onchange="setVoucherPdf('flight',event)">
+        </label>
+        ${form.pdf?`<div class="pdf-attached"><i class="ti ti-file" style="font-size:11px;vertical-align:-1px"></i> ${esc(form.pdf)} ${form.pdfData?`<span class="attach-remove" style="color:var(--color-text-info);" onclick="openPdfData(vForm['flight'].pdfData)">열기</span> `:''}<span class="attach-remove" onclick="removeVoucherPdf('flight')">삭제</span></div>`:''}
+        <div class="submit-row">
+          <button class="cancel-btn" onclick="cancelVoucherForm('flight')">취소</button>
+          <button class="submit-btn" onclick="submitVoucherForm('flight')">${form.mode==='edit'?'수정 완료':'저장'}</button>
+        </div>
+      </div>`;
+    } else {
+      formHtml=`<div style="border-top:0.5px solid var(--color-border);padding-top:12px;margin-top:4px;">
+        <div class="form-section-title">${form.mode==='edit'?`${cfg.label} 수정`:`${cfg.label} 추가`}</div>
+        <div class="field-label">이름 <span class="field-required">*</span></div>
+        <input type="text" id="v-${type}-name" placeholder="예: 괴레메 열기구 투어" value="${escAttr(form.name)}">
+        <div class="field-label">날짜 <span class="field-opt">(선택)</span></div>
+        <input type="text" id="v-${type}-date" placeholder="예: 9/15 09:00" value="${escAttr(form.date)}" style="margin-bottom:10px;">
+        <div class="field-label">메모 <span class="field-opt">(선택)</span></div>
+        <input type="text" id="v-${type}-desc" placeholder="예: 확인번호 ABC123" value="${escAttr(form.desc)}" style="margin-bottom:10px;">
+        <div class="field-label" style="margin-bottom:6px;">PDF 바우처 <span class="field-opt">(선택)</span></div>
+        <label class="pdf-upload-label" style="margin-bottom:${form.pdf?'6px':'0'};">
+          <i class="ti ti-upload" style="font-size:15px"></i>
+          <span>${form.pdf||'PDF 파일 선택'}</span>
+          <input type="file" accept=".pdf" onchange="setVoucherPdf('${type}',event)">
+        </label>
+        ${form.pdf?`<div class="pdf-attached"><i class="ti ti-file" style="font-size:11px;vertical-align:-1px"></i> ${esc(form.pdf)} ${form.pdfData?`<span class="attach-remove" style="color:var(--color-text-info);" onclick="openPdfData(vForm['${type}'].pdfData)">열기</span> `:''}<span class="attach-remove" onclick="removeVoucherPdf('${type}')">삭제</span></div>`:''}
+        <div class="submit-row">
+          <button class="cancel-btn" onclick="cancelVoucherForm('${type}')">취소</button>
+          <button class="submit-btn" onclick="submitVoucherForm('${type}')">${form.mode==='edit'?'수정 완료':'저장'}</button>
+        </div>
+      </div>`;
+    }
+  }
+  root.innerHTML=`<div class="card" style="margin-bottom:1rem;">
+    <div class="hotel-section-header" onclick="toggleVoucherSection('${type}')">
+      <div class="hotel-section-title"><i class="ti ${cfg.icon}" style="font-size:16px;color:${cfg.color};vertical-align:-2px;"></i> ${cfg.label}</div>
+      <i class="ti ${open?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
+    </div>
+    ${open?`<div class="hotel-body">${listHtml}${!form?`<button class="add-more-btn" style="margin-bottom:0;" onclick="openVoucherAdd('${type}')"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> ${cfg.label} 추가</button>`:''} ${formHtml}</div>`:''}
+  </div>`;
+}
+function toggleVoucherSection(type){vOpen[type]=!vOpen[type];renderVoucherSection(type);}
+function openVoucherAdd(type){
+  syncVoucherForm(type);
+  vForm[type]=type==='flight'
+    ?{mode:'add',editIdx:null,from:'',to:'',departDate:'',arriveDate:'',pdf:null,pdfData:null}
+    :{mode:'add',editIdx:null,name:'',date:'',desc:'',pdf:null,pdfData:null};
+  renderVoucherSection(type);
+}
+function cancelVoucherForm(type){vForm[type]=null;renderVoucherSection(type);}
+function syncVoucherForm(type){
+  const f=vForm[type];if(!f)return;
+  if(type==='flight'){
+    ['from','to','departDate','arriveDate'].forEach(k=>{const el=document.getElementById(`v-flight-${k}`);if(el)f[k]=el.value;});
+  } else {
+    ['name','date','desc'].forEach(k=>{const el=document.getElementById(`v-${type}-${k}`);if(el)f[k]=el.value;});
+  }
+}
+function setVoucherPdf(type,e){const f=e.target.files[0];if(!f)return;syncVoucherForm(type);const r=new FileReader();r.onload=ev=>{vForm[type].pdf=f.name;vForm[type].pdfData=ev.target.result;renderVoucherSection(type);};r.readAsDataURL(f);}
+function removeVoucherPdf(type){syncVoucherForm(type);vForm[type].pdf=null;vForm[type].pdfData=null;renderVoucherSection(type);}
+function startVoucherEdit(type,idx){
+  const item=vouchers[type][idx];if(!item)return;
+  vForm[type]=type==='flight'
+    ?{mode:'edit',editIdx:idx,from:item.from||'',to:item.to||'',departDate:item.departDate||'',arriveDate:item.arriveDate||'',pdf:item.pdf||null,pdfData:item.pdfData||null}
+    :{mode:'edit',editIdx:idx,name:item.name,date:item.date||'',desc:item.desc||'',pdf:item.pdf||null,pdfData:item.pdfData||null};
+  renderVoucherSection(type);
+}
+function submitVoucherForm(type){
+  syncVoucherForm(type);
+  const f=vForm[type];if(!f)return;
+  let item;
+  if(type==='flight'){
+    if(!f.from.trim()||!f.to.trim())return;
+    item={from:f.from.trim(),to:f.to.trim()};
+    if(f.departDate.trim())item.departDate=f.departDate.trim();
+    if(f.arriveDate.trim())item.arriveDate=f.arriveDate.trim();
+  } else {
+    if(!f.name.trim())return;
+    item={name:f.name.trim()};
+    if(f.date.trim())item.date=f.date.trim();
+    if(f.desc.trim())item.desc=f.desc.trim();
+  }
+  if(f.pdf)item.pdf=f.pdf;
+  if(f.pdfData)item.pdfData=f.pdfData;
+  if(f.mode==='edit'&&f.editIdx!=null){vouchers[type][f.editIdx]=item;}
+  else{vouchers[type].push(item);}
+  vForm[type]=null;
+  saveVouchers(type);renderVoucherSection(type);
+}
+function deleteVoucher(type,idx){
+  vouchers[type].splice(idx,1);
+  saveVouchers(type);renderVoucherSection(type);
+}
+
+function openPdfData(dataUrl){
+  if(!dataUrl)return;
+  const parts=dataUrl.split(',');
+  const mime=parts[0].split(':')[1].split(';')[0];
+  const bytes=atob(parts[1]);
+  const arr=new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i);
+  window.open(URL.createObjectURL(new Blob([arr],{type:mime})),'_blank');
+}
+function openVoucherPdf(type,idx){const d=(vouchers[type][idx]||{}).pdfData;if(d)openPdfData(d);}
+function openTaskPdf(idx){const d=((tasks[selectedDate]||[])[idx]||{}).pdfData;if(d)openPdfData(d);}
+
+function renderScheduleSection(){
+  const root=document.getElementById('schedule-root');
+  root.innerHTML=`<div class="card" style="margin-bottom:1rem;">
+    <div class="hotel-section-header" onclick="toggleScheduleSection()">
+      <div class="hotel-section-title"><i class="ti ti-calendar-event" style="font-size:16px;color:#534AB7;vertical-align:-2px;"></i> 일정</div>
+      <i class="ti ${scheduleOpen?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
+    </div>
+    ${scheduleOpen?`<div id="cal-root"></div><div id="detail-root" style="border-top:0.5px solid var(--color-border);"></div>`:''}
+  </div>`;
+  if(scheduleOpen){renderCal();renderDetail();}
+}
+function toggleScheduleSection(){scheduleOpen=!scheduleOpen;renderScheduleSection();}
+
+// Firebase 실시간 리스너 설정
+const _ready={tasks:false,hotels:false,flights:false,bookings:false};
+function _checkReady(){
+  if(Object.values(_ready).every(v=>v)){
+    document.getElementById('loading-screen').style.display='none';
+    renderHotelSection();
+    renderVoucherSection('flight');
+    renderVoucherSection('booking');
+    renderScheduleSection();
+  }
+}
+
+onValue(dbRef('tasks'), snap=>{
+  const val=snap.val();
+  tasks=(val && typeof val==='object') ? val : {};
+  if(!_ready.tasks){_ready.tasks=true;_checkReady();}
+  else if(_remoteSkip.tasks){_remoteSkip.tasks=false;}
+  else{renderCal();renderDetail();}
+});
+
+onValue(dbRef('hotels'), snap=>{
+  hotels=fbArr(snap.val());
+  if(!_ready.hotels){_ready.hotels=true;_checkReady();}
+  else if(_remoteSkip.hotels){_remoteSkip.hotels=false;}
+  else{renderHotelSection();}
+});
+
+onValue(dbRef('flights'), snap=>{
+  vouchers.flight=fbArr(snap.val());
+  if(!_ready.flights){_ready.flights=true;_checkReady();}
+  else if(_remoteSkip.flights){_remoteSkip.flights=false;}
+  else{renderVoucherSection('flight');}
+});
+
+onValue(dbRef('bookings'), snap=>{
+  vouchers.booking=fbArr(snap.val());
+  if(!_ready.bookings){_ready.bookings=true;_checkReady();}
+  else if(_remoteSkip.bookings){_remoteSkip.bookings=false;}
+  else{renderVoucherSection('booking');}
+});
+
+// 8초 후에도 로딩 중이면 오류 표시
+setTimeout(()=>{
+  if(!Object.values(_ready).every(v=>v)){
+    document.getElementById('loading-screen').style.display='none';
+    showError('Firebase에 연결할 수 없어요. Realtime Database 규칙(Rules)에서 읽기/쓰기가 허용되어 있는지 확인해주세요.');
+    renderHotelSection();renderVoucherSection('flight');renderVoucherSection('booking');renderScheduleSection();
+  }
+},8000);
+
+// inline onclick 핸들러들을 window에 노출
+Object.assign(window,{
+  changeWeek, selectDay, openAddForm, setTag, toggleOpt, syncFormInputs,
+  setPdf, removePdf, openPdfData, cancelForm, submitForm, startEdit, deleteTask, openTaskPdf,
+  onDragStart, onDragOver, onDrop, onDragEnd,
+  toggleHotelSection, openHotelAdd, startHotelEdit, deleteHotel,
+  setHotelCity, syncHotelFormInputs, submitHotelForm, cancelHotelForm, selectHotelPreset,
+  toggleVoucherSection, openVoucherAdd, startVoucherEdit, deleteVoucher,
+  setVoucherPdf, removeVoucherPdf, submitVoucherForm, cancelVoucherForm, openVoucherPdf,
+  toggleScheduleSection,
+});
+</script>
+</body>
+</html>
