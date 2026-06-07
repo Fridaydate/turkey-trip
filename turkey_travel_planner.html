@@ -87,6 +87,17 @@
   .task-desc-text { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-top: 3px; white-space: pre-wrap; }
   .task-link { font-size: 11px; color: var(--color-text-info); text-decoration: none; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .task-meta { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .cost-text { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; }
+  .map-text { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; text-decoration: none; display: inline-block; }
+  .settlement-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); gap: 10px; }
+  .settlement-item:last-child { border-bottom: none; }
+  .settlement-label { font-size: 13px; flex: 1; min-width: 0; }
+  .settlement-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .settlement-cost { font-size: 13px; font-weight: 500; color: #993C1D; flex-shrink: 0; }
+  .settlement-total { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 0; margin-top: 4px; border-top: 1px solid var(--color-border); }
+  .settlement-total-label { font-size: 14px; font-weight: 600; }
+  .settlement-total-amount { font-size: 16px; font-weight: 700; color: #993C1D; }
+  .settlement-empty { text-align: center; padding: 20px; color: var(--color-text-tertiary); font-size: 13px; }
   .task-actions { display: flex; gap: 2px; flex-shrink: 0; padding-top: 1px; }
   .icon-btn { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 4px; line-height: 1; border-radius: 4px; font-size: 14px; }
   .icon-btn.edit:hover { color: #534AB7; background: rgba(0,0,0,0.02); }
@@ -160,7 +171,7 @@
   .hotel-body { padding: 12px 16px; }
   .hotel-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 0.5px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 8px; background: var(--color-bg); }
   .hotel-item-info { flex: 1; min-width: 0; }
-  .hotel-item-name { font-size: 13px; font-weight: 500; }
+  .hotel-item-name { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
   .hotel-item-address { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
   .hotel-item-dates { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
   .hotel-item-actions { display: flex; gap: 2px; flex-shrink: 0; padding-top: 1px; }
@@ -186,6 +197,7 @@
     <h1 class="page-title">튀르키예 여행</h1>
   </div>
 
+  <div id="settlement-root"></div>
   <div id="hotel-root"></div>
   <div id="flight-root"></div>
   <div id="booking-root"></div>
@@ -269,7 +281,10 @@ function saveHotels(){_remoteSkip.hotels=true;set(dbRef('hotels'),hotels.length?
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getWeekStart(w){const b=new Date(2026,8,8);b.setDate(b.getDate()+w*7);return b;}
 function getTag(key){return TAGS.find(t=>t.key===key)||TAGS[7];}
-function freshForm(){return {mode:'add',editIdx:null,tag:null,title:'',desc:'',optMode:null,mapUrl:'',pdfFile:null,pdfData:null,selectedHotelIdx:null};}
+function fmtCost(n){if(!n&&n!==0)return '';return Number(n).toLocaleString('ko-KR')+'원';}
+function parseCost(s){const n=parseInt(String(s).replace(/[^0-9]/g,''));return isNaN(n)?null:n;}
+function freshForm(){return {mode:'add',editIdx:null,tag:null,title:'',desc:'',cost:'',optMode:null,mapUrl:'',pdfFile:null,pdfData:null,selectedHotelIdx:null};}
+let settlementOpen=false;
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escAttr(s){return String(s).replace(/"/g,'&quot;').replace(/&/g,'&amp;');}
 
@@ -347,6 +362,8 @@ function buildForm(f,hasTasks){
     <input type="text" id="inp-title" placeholder="이 날은 뭘 해보면 좋을까?🤩" value="${escAttr(f.title||'')}" onkeydown="if(event.key==='Enter')submitForm()">
     <div class="field-label">설명 <span class="field-opt">(선택)</span></div>
     <textarea class="desc-textarea" id="inp-desc" placeholder="팁이나 메모를 남겨보세요 ✍️">${esc(f.desc||'')}</textarea>
+    <div class="field-label">지출 <span class="field-opt">(선택)</span></div>
+    <input type="text" id="inp-cost" placeholder="예: 150000" value="${escAttr(f.cost||'')}" inputmode="numeric">
     <div class="field-label" style="margin-bottom:8px;">첨부 <span class="field-opt">(선택)</span></div>
     <div class="optional-row">
       <button class="opt-btn${f.optMode==='map'?' selected':''}" onclick="toggleOpt('map')"><i class="ti ti-map-pin" style="font-size:15px"></i>구글 맵 링크</button>
@@ -383,8 +400,9 @@ function renderDetail(){
       const tc=TAG_COLORS[tag.key];
       let extra='';
       if(t.desc) extra+=`<div class="task-desc-text">${esc(t.desc)}</div>`;
-      if(t.mapUrl) extra+=`<a class="task-link" href="${escAttr(t.mapUrl)}" target="_blank" style="font-size:12px;color:var(--color-text-info);text-decoration:underline;margin-top:3px;display:inline-block;">지도 보기</a>`;
+      if(t.mapUrl) extra+=`<a class="map-text" href="${escAttr(t.mapUrl)}" target="_blank">📍위치보기</a>`;
       if(t.pdf) extra+=`<div class="task-meta"><i class="ti ti-paperclip" style="font-size:11px;vertical-align:-1px"></i> ${esc(t.pdf)}${t.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openTaskPdf(${i})">열기</span>`:''}</div>`;
+      if(t.cost!=null) extra+=`<div class="cost-text">💰 ${fmtCost(t.cost)}</div>`;
       taskHtml+=`<div class="task-item" draggable="true" data-idx="${i}"
         ondragstart="onDragStart(event,${i})"
         ondragover="onDragOver(event)"
@@ -432,6 +450,7 @@ function syncFormInputs(){
   const t=document.getElementById('inp-title'); if(t) formState.title=t.value;
   const de=document.getElementById('inp-desc'); if(de) formState.desc=de.value;
   const u=document.getElementById('inp-map-url'); if(u) formState.mapUrl=u.value;
+  const c=document.getElementById('inp-cost'); if(c) formState.cost=c.value;
 }
 function setTag(key){ syncFormInputs(); if(!formState)formState=freshForm(); formState.tag=formState.tag===key?null:key; renderDetail(); }
 function toggleOpt(mode){ syncFormInputs(); if(!formState)formState=freshForm(); formState.optMode=formState.optMode===mode?null:mode; renderDetail(); }
@@ -441,7 +460,7 @@ function openAddForm(){ formState=freshForm(); renderDetail(); }
 function cancelForm(){ formState=null; renderDetail(); }
 function startEdit(idx){
   const t=tasks[selectedDate][idx];
-  formState={mode:'edit',editIdx:idx,tag:t.tag||null,title:t.name,desc:t.desc||'',optMode:t.mapUrl?'map':t.pdf?'pdf':null,mapUrl:t.mapUrl||'',pdfFile:t.pdf||null,pdfData:t.pdfData||null,selectedHotelIdx:null};
+  formState={mode:'edit',editIdx:idx,tag:t.tag||null,title:t.name,desc:t.desc||'',cost:t.cost||'',optMode:t.mapUrl?'map':t.pdf?'pdf':null,mapUrl:t.mapUrl||'',pdfFile:t.pdf||null,pdfData:t.pdfData||null,selectedHotelIdx:null};
   renderDetail();
 }
 function submitForm(){
@@ -450,6 +469,7 @@ function submitForm(){
   if(!f||!f.title||!f.title.trim())return;
   const item={name:f.title.trim(),tag:f.tag||null};
   if(f.desc&&f.desc.trim()) item.desc=f.desc.trim();
+  const cost=parseCost(f.cost); if(cost!==null) item.cost=cost;
   if(f.optMode==='map'&&f.mapUrl) item.mapUrl=f.mapUrl;
   if(f.optMode==='pdf'&&f.pdfFile){item.pdf=f.pdfFile;if(f.pdfData)item.pdfData=f.pdfData;}
   if(!tasks[selectedDate]) tasks[selectedDate]=[];
@@ -457,7 +477,7 @@ function submitForm(){
   else { tasks[selectedDate].push(item); }
   formState=null;
   saveTasks();
-  renderCal(); renderDetail();
+  renderCal(); renderDetail(); renderSettlementSection();
 }
 function deleteTask(idx){
   tasks[selectedDate].splice(idx,1);
@@ -492,7 +512,8 @@ function renderHotelSection(){
           ${h.city?`<span class="city-pill ${pill}" style="font-size:9px;margin-bottom:4px;display:inline-block;">${esc(h.city)}</span>`:''}
           <div class="hotel-item-name">${esc(h.name)}</div>
           ${h.desc?`<div class="hotel-item-address">${esc(h.desc)}</div>`:''}
-          ${h.mapUrl?`<a href="${escAttr(h.mapUrl)}" target="_blank" style="display:inline-flex;align-items:center;gap:3px;margin-top:4px;padding:2px 7px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-size:11px;font-weight:500;text-decoration:none;"><i class="ti ti-map-pin" style="font-size:10px;"></i>지도 보기</a>`:''}
+          ${h.cost!=null?`<div class="cost-text">💰 ${fmtCost(h.cost)}</div>`:''}
+          ${h.mapUrl?`<a class="map-text" href="${escAttr(h.mapUrl)}" target="_blank">📍위치보기</a>`:''}
         </div>
         <div class="hotel-item-actions">
           <button class="icon-btn edit" onclick="startHotelEdit(${i})" title="수정"><i class="ti ti-edit"></i></button>
@@ -515,7 +536,9 @@ function renderHotelSection(){
       <div class="field-label">구글 맵 링크 <span class="field-opt">(선택)</span></div>
       <input type="url" id="h-mapUrl" placeholder="https://maps.google.com/..." value="${escAttr(hf.mapUrl)}">
       <div class="field-label">설명 <span class="field-opt">(선택)</span></div>
-      <input type="text" id="h-desc" placeholder="예: 조식 포함, 조용한 위치" value="${escAttr(hf.desc)}" style="margin-bottom:10px;">
+      <input type="text" id="h-desc" placeholder="예: 조식 포함, 조용한 위치" value="${escAttr(hf.desc)}">
+      <div class="field-label">지출 <span class="field-opt">(선택)</span></div>
+      <input type="text" id="h-cost" placeholder="예: 320000" value="${escAttr(hf.cost||'')}" inputmode="numeric" style="margin-bottom:10px;">
       <div class="field-label" style="margin-bottom:8px;">지역 <span class="field-opt">(선택)</span></div>
       <div class="tags-row" style="margin-bottom:0;">${cityBtns}</div>
       <div class="submit-row">
@@ -538,16 +561,16 @@ function renderHotelSection(){
   </div>`;
 }
 function toggleHotelSection(){hotelOpen=!hotelOpen;renderHotelSection();}
-function openHotelAdd(){hotelFormState={mode:'add',editIdx:null,name:'',mapUrl:'',desc:'',city:null};renderHotelSection();}
+function openHotelAdd(){hotelFormState={mode:'add',editIdx:null,name:'',mapUrl:'',desc:'',cost:'',city:null};renderHotelSection();}
 function cancelHotelForm(){hotelFormState=null;renderHotelSection();}
 function setHotelCity(city){syncHotelFormInputs();hotelFormState.city=hotelFormState.city===city?null:city;renderHotelSection();}
 function syncHotelFormInputs(){
   if(!hotelFormState)return;
-  ['name','mapUrl','desc'].forEach(f=>{const el=document.getElementById(`h-${f}`);if(el)hotelFormState[f]=el.value;});
+  ['name','mapUrl','desc','cost'].forEach(f=>{const el=document.getElementById(`h-${f}`);if(el)hotelFormState[f]=el.value;});
 }
 function startHotelEdit(idx){
   const h=hotels[idx];if(!h)return;
-  hotelFormState={mode:'edit',editIdx:idx,name:h.name,mapUrl:h.mapUrl||'',desc:h.desc||'',city:h.city||null};
+  hotelFormState={mode:'edit',editIdx:idx,name:h.name,mapUrl:h.mapUrl||'',desc:h.desc||'',cost:h.cost||'',city:h.city||null};
   renderHotelSection();
 }
 function submitHotelForm(){
@@ -558,10 +581,11 @@ function submitHotelForm(){
   if(hf.mapUrl.trim())item.mapUrl=hf.mapUrl.trim();
   if(hf.desc.trim())item.desc=hf.desc.trim();
   if(hf.city)item.city=hf.city;
+  const cost=parseCost(hf.cost); if(cost!==null)item.cost=cost;
   if(hf.mode==='edit'&&hf.editIdx!=null){hotels[hf.editIdx]=item;}
   else{hotels.push(item);}
   hotelFormState=null;
-  saveHotels();renderHotelSection();renderDetail();
+  saveHotels();renderHotelSection();renderDetail();renderSettlementSection();
 }
 function deleteHotel(idx){
   hotels.splice(idx,1);
@@ -592,6 +616,7 @@ function renderVoucherSection(type){
       <div class="hotel-item-info">
         <div class="hotel-item-name" style="font-size:14px;letter-spacing:-0.01em;">${esc(item.from||'?')} → ${esc(item.to||'?')}</div>
         ${(item.departDate||item.arriveDate)?`<div class="hotel-item-dates">${item.departDate?esc(item.departDate):''}${item.departDate&&item.arriveDate?' → ':''}${item.arriveDate?esc(item.arriveDate):''}</div>`:''}
+        ${item.cost!=null?`<div class="cost-text">💰 ${fmtCost(item.cost)}</div>`:''}
         ${item.pdf?`<div class="hotel-item-dates"><i class="ti ti-paperclip" style="font-size:10px;vertical-align:-1px"></i> ${esc(item.pdf)}${item.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openVoucherPdf('flight',${i})">열기</span>`:''}</div>`:''}
       </div>
       <div class="hotel-item-actions">
@@ -605,6 +630,7 @@ function renderVoucherSection(type){
         <div class="hotel-item-name">${esc(item.name)}</div>
         ${item.date?`<div class="hotel-item-dates">${esc(item.date)}</div>`:''}
         ${item.desc?`<div class="hotel-item-address">${esc(item.desc)}</div>`:''}
+        ${item.cost!=null?`<div class="cost-text">💰 ${fmtCost(item.cost)}</div>`:''}
         ${item.pdf?`<div class="hotel-item-dates"><i class="ti ti-paperclip" style="font-size:10px;vertical-align:-1px"></i> ${esc(item.pdf)}${item.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openVoucherPdf('${type}',${i})">열기</span>`:''}</div>`:''}
       </div>
       <div class="hotel-item-actions">
@@ -626,6 +652,8 @@ function renderVoucherSection(type){
           <div style="flex:1;min-width:0;"><div class="field-label">출발일 <span class="field-opt">(선택)</span></div><input type="text" id="v-flight-departDate" placeholder="예: 9/10 06:00" value="${escAttr(form.departDate)}"></div>
           <div style="flex:1;min-width:0;"><div class="field-label">도착일 <span class="field-opt">(선택)</span></div><input type="text" id="v-flight-arriveDate" placeholder="예: 9/10 12:30" value="${escAttr(form.arriveDate)}"></div>
         </div>
+        <div class="field-label">지출 <span class="field-opt">(선택)</span></div>
+        <input type="text" id="v-flight-cost" placeholder="예: 850000" value="${escAttr(form.cost||'')}" inputmode="numeric">
         <div class="field-label" style="margin-bottom:6px;">PDF 바우처 <span class="field-opt">(선택)</span></div>
         <label class="pdf-upload-label" style="margin-bottom:${form.pdf?'6px':'0'};">
           <i class="ti ti-upload" style="font-size:15px"></i>
@@ -646,7 +674,9 @@ function renderVoucherSection(type){
         <div class="field-label">날짜 <span class="field-opt">(선택)</span></div>
         <input type="text" id="v-${type}-date" placeholder="예: 9/15 09:00" value="${escAttr(form.date)}" style="margin-bottom:10px;">
         <div class="field-label">메모 <span class="field-opt">(선택)</span></div>
-        <input type="text" id="v-${type}-desc" placeholder="예: 확인번호 ABC123" value="${escAttr(form.desc)}" style="margin-bottom:10px;">
+        <input type="text" id="v-${type}-desc" placeholder="예: 확인번호 ABC123" value="${escAttr(form.desc)}">
+        <div class="field-label">지출 <span class="field-opt">(선택)</span></div>
+        <input type="text" id="v-${type}-cost" placeholder="예: 120000" value="${escAttr(form.cost||'')}" inputmode="numeric">
         <div class="field-label" style="margin-bottom:6px;">PDF 바우처 <span class="field-opt">(선택)</span></div>
         <label class="pdf-upload-label" style="margin-bottom:${form.pdf?'6px':'0'};">
           <i class="ti ti-upload" style="font-size:15px"></i>
@@ -673,17 +703,17 @@ function toggleVoucherSection(type){vOpen[type]=!vOpen[type];renderVoucherSectio
 function openVoucherAdd(type){
   syncVoucherForm(type);
   vForm[type]=type==='flight'
-    ?{mode:'add',editIdx:null,from:'',to:'',departDate:'',arriveDate:'',pdf:null,pdfData:null}
-    :{mode:'add',editIdx:null,name:'',date:'',desc:'',pdf:null,pdfData:null};
+    ?{mode:'add',editIdx:null,from:'',to:'',departDate:'',arriveDate:'',cost:'',pdf:null,pdfData:null}
+    :{mode:'add',editIdx:null,name:'',date:'',desc:'',cost:'',pdf:null,pdfData:null};
   renderVoucherSection(type);
 }
 function cancelVoucherForm(type){vForm[type]=null;renderVoucherSection(type);}
 function syncVoucherForm(type){
   const f=vForm[type];if(!f)return;
   if(type==='flight'){
-    ['from','to','departDate','arriveDate'].forEach(k=>{const el=document.getElementById(`v-flight-${k}`);if(el)f[k]=el.value;});
+    ['from','to','departDate','arriveDate','cost'].forEach(k=>{const el=document.getElementById(`v-flight-${k}`);if(el)f[k]=el.value;});
   } else {
-    ['name','date','desc'].forEach(k=>{const el=document.getElementById(`v-${type}-${k}`);if(el)f[k]=el.value;});
+    ['name','date','desc','cost'].forEach(k=>{const el=document.getElementById(`v-${type}-${k}`);if(el)f[k]=el.value;});
   }
 }
 function setVoucherPdf(type,e){const f=e.target.files[0];if(!f)return;syncVoucherForm(type);const r=new FileReader();r.onload=ev=>{vForm[type].pdf=f.name;vForm[type].pdfData=ev.target.result;renderVoucherSection(type);};r.readAsDataURL(f);}
@@ -691,8 +721,8 @@ function removeVoucherPdf(type){syncVoucherForm(type);vForm[type].pdf=null;vForm
 function startVoucherEdit(type,idx){
   const item=vouchers[type][idx];if(!item)return;
   vForm[type]=type==='flight'
-    ?{mode:'edit',editIdx:idx,from:item.from||'',to:item.to||'',departDate:item.departDate||'',arriveDate:item.arriveDate||'',pdf:item.pdf||null,pdfData:item.pdfData||null}
-    :{mode:'edit',editIdx:idx,name:item.name,date:item.date||'',desc:item.desc||'',pdf:item.pdf||null,pdfData:item.pdfData||null};
+    ?{mode:'edit',editIdx:idx,from:item.from||'',to:item.to||'',departDate:item.departDate||'',arriveDate:item.arriveDate||'',cost:item.cost||'',pdf:item.pdf||null,pdfData:item.pdfData||null}
+    :{mode:'edit',editIdx:idx,name:item.name,date:item.date||'',desc:item.desc||'',cost:item.cost||'',pdf:item.pdf||null,pdfData:item.pdfData||null};
   renderVoucherSection(type);
 }
 function submitVoucherForm(type){
@@ -712,10 +742,11 @@ function submitVoucherForm(type){
   }
   if(f.pdf)item.pdf=f.pdf;
   if(f.pdfData)item.pdfData=f.pdfData;
+  const vcost=parseCost(f.cost); if(vcost!==null)item.cost=vcost;
   if(f.mode==='edit'&&f.editIdx!=null){vouchers[type][f.editIdx]=item;}
   else{vouchers[type].push(item);}
   vForm[type]=null;
-  saveVouchers(type);renderVoucherSection(type);
+  saveVouchers(type);renderVoucherSection(type);renderSettlementSection();
 }
 function deleteVoucher(type,idx){
   vouchers[type].splice(idx,1);
@@ -747,11 +778,47 @@ function renderScheduleSection(){
 }
 function toggleScheduleSection(){scheduleOpen=!scheduleOpen;renderScheduleSection();}
 
+function renderSettlementSection(){
+  const root=document.getElementById('settlement-root');
+  if(!root)return;
+  const items=[];
+  hotels.forEach(h=>{if(h.cost!=null)items.push({label:h.name,tagLabel:'숙소',tagBg:'#E1F5EE',tagColor:'#085041',cost:h.cost});});
+  vouchers.flight.forEach(v=>{if(v.cost!=null)items.push({label:`${v.from||'?'} → ${v.to||'?'}`,tagLabel:'항공',tagBg:'#E6F1FB',tagColor:'#0C447C',cost:v.cost});});
+  vouchers.booking.forEach(v=>{if(v.cost!=null)items.push({label:v.name,tagLabel:'예약',tagBg:'#FAEEDA',tagColor:'#633806',cost:v.cost});});
+  Object.keys(tasks).sort().forEach(date=>{
+    (tasks[date]||[]).forEach(t=>{
+      if(t.cost!=null){
+        const tag=getTag(t.tag); const tc=TAG_COLORS[tag.key];
+        items.push({label:t.name,tagLabel:`${tag.emoji} ${tag.label}`,tagBg:tc.bg,tagColor:tc.color,cost:t.cost});
+      }
+    });
+  });
+  const total=items.reduce((s,it)=>s+it.cost,0);
+  const listHtml=items.length===0
+    ?`<div class="settlement-empty">지출 내역이 없어요</div>`
+    :items.map(it=>`<div class="settlement-item">
+        <div class="settlement-label">
+          <span style="font-size:10px;font-weight:600;color:${it.tagColor};background:${it.tagBg};border-radius:3px;padding:1px 5px;margin-right:5px;">${it.tagLabel}</span>${esc(it.label)}
+        </div>
+        <div class="settlement-cost">💰 ${fmtCost(it.cost)}</div>
+      </div>`).join('')
+    +`<div class="settlement-total"><span class="settlement-total-label">총 지출</span><span class="settlement-total-amount">${fmtCost(total)}</span></div>`;
+  root.innerHTML=`<div class="card" style="margin-bottom:0.7rem;">
+    <div class="hotel-section-header" onclick="toggleSettlementSection()">
+      <div class="hotel-section-title"><i class="ti ti-receipt" style="font-size:16px;color:#993C1D;vertical-align:-2px;"></i> 정산</div>
+      <i class="ti ${settlementOpen?'ti-chevron-up':'ti-chevron-down'}" style="font-size:16px;color:var(--color-text-tertiary);"></i>
+    </div>
+    ${settlementOpen?`<div class="hotel-body">${listHtml}</div>`:''}
+  </div>`;
+}
+function toggleSettlementSection(){settlementOpen=!settlementOpen;renderSettlementSection();}
+
 // Firebase 실시간 리스너 설정
 const _ready={tasks:false,hotels:false,flights:false,bookings:false};
 function _checkReady(){
   if(Object.values(_ready).every(v=>v)){
     document.getElementById('loading-screen').style.display='none';
+    renderSettlementSection();
     renderHotelSection();
     renderVoucherSection('flight');
     renderVoucherSection('booking');
@@ -764,28 +831,28 @@ onValue(dbRef('tasks'), snap=>{
   tasks=(val && typeof val==='object') ? val : {};
   if(!_ready.tasks){_ready.tasks=true;_checkReady();}
   else if(_remoteSkip.tasks){_remoteSkip.tasks=false;}
-  else{renderCal();renderDetail();}
+  else{renderCal();renderDetail();renderSettlementSection();}
 });
 
 onValue(dbRef('hotels'), snap=>{
   hotels=fbArr(snap.val());
   if(!_ready.hotels){_ready.hotels=true;_checkReady();}
   else if(_remoteSkip.hotels){_remoteSkip.hotels=false;}
-  else{renderHotelSection();}
+  else{renderHotelSection();renderSettlementSection();}
 });
 
 onValue(dbRef('flights'), snap=>{
   vouchers.flight=fbArr(snap.val());
   if(!_ready.flights){_ready.flights=true;_checkReady();}
   else if(_remoteSkip.flights){_remoteSkip.flights=false;}
-  else{renderVoucherSection('flight');}
+  else{renderVoucherSection('flight');renderSettlementSection();}
 });
 
 onValue(dbRef('bookings'), snap=>{
   vouchers.booking=fbArr(snap.val());
   if(!_ready.bookings){_ready.bookings=true;_checkReady();}
   else if(_remoteSkip.bookings){_remoteSkip.bookings=false;}
-  else{renderVoucherSection('booking');}
+  else{renderVoucherSection('booking');renderSettlementSection();}
 });
 
 // 8초 후에도 로딩 중이면 오류 표시
@@ -806,7 +873,7 @@ Object.assign(window,{
   setHotelCity, syncHotelFormInputs, submitHotelForm, cancelHotelForm, selectHotelPreset,
   toggleVoucherSection, openVoucherAdd, startVoucherEdit, deleteVoucher,
   setVoucherPdf, removeVoucherPdf, submitVoucherForm, cancelVoucherForm, openVoucherPdf,
-  toggleScheduleSection,
+  toggleScheduleSection, toggleSettlementSection,
 });
 </script>
 </body>
