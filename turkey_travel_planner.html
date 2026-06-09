@@ -475,6 +475,7 @@ function renderCal(){
   const root=document.getElementById('cal-root');
   if(!root)return;
   if(window.innerWidth<=768){
+    const prevScroll=root.querySelector('.cal-week')?.scrollLeft??-1;
     const tripDates=Object.keys(SCHEDULE).sort();
     let h='<div class="cal-week">';
     tripDates.forEach(key=>{
@@ -492,8 +493,13 @@ function renderCal(){
     h+='</div>';
     root.innerHTML=h;
     requestAnimationFrame(()=>{
-      const el=root.querySelector('.day-cell.active');
-      if(el)el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+      const cw=root.querySelector('.cal-week');if(!cw)return;
+      if(prevScroll>=0){
+        cw.scrollLeft=prevScroll;
+      } else {
+        const el=root.querySelector('.day-cell.active');
+        if(el)el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+      }
     });
     return;
   }
