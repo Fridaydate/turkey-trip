@@ -19,9 +19,12 @@
     --radius-md: 12px;
     --radius-lg: 12px;
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --color-page-bg: #F7FAFE;
+    --color-detail-bg: #F1F6FB;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
       --color-bg: #1c1c1e;
       --color-bg-secondary: #2c2c2e;
       --color-bg-tertiary: #3a3a3c;
@@ -31,10 +34,26 @@
       --color-text-info: #64a8e8;
       --color-border: rgba(255,255,255,0.10);
       --color-border-md: rgba(255,255,255,0.10);
+      --color-page-bg: #111113;
+      --color-detail-bg: #1a1c1f;
     }
   }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-bg: #1c1c1e;
+    --color-bg-secondary: #2c2c2e;
+    --color-bg-tertiary: #3a3a3c;
+    --color-text-primary: #f5f5f5;
+    --color-text-secondary: #aeaeb2;
+    --color-text-tertiary: #636366;
+    --color-text-info: #64a8e8;
+    --color-border: rgba(255,255,255,0.10);
+    --color-border-md: rgba(255,255,255,0.10);
+    --color-page-bg: #111113;
+    --color-detail-bg: #1a1c1f;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: #F7FAFE; color: var(--color-text-primary); min-height: 100vh; padding: 2rem 1.25rem; }
+  body { font-family: var(--font); background: var(--color-page-bg); color: var(--color-text-primary); min-height: 100vh; padding: 2rem 1.25rem; transition: background-color 0.2s, color 0.2s; }
   .container { max-width: 760px; margin: 0 auto; }
   .page-header { padding: 2.5rem 0 1.75rem; }
   .page-icon { font-size: 64px; line-height: 1; margin-bottom: 14px; display: block; }
@@ -45,7 +64,7 @@
   #dday-display.after { color: #000000; }
 
   .card { background: var(--color-bg); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 0.7rem; overflow: hidden; }
-  #loading-screen { position: fixed; inset: 0; background: #F7FAFE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; font-size: 17px; color: var(--color-text-secondary); }
+  #loading-screen { position: fixed; inset: 0; background: var(--color-page-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; font-size: 17px; color: var(--color-text-secondary); }
   #loading-screen .spin { width: 28px; height: 28px; border: 3px solid rgba(34,115,255,0.2); border-top-color: #2273FF; border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   #firebase-error { background: #FCEBEB; color: #A32D2D; font-size: 15px; padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 1rem; display: none; }
@@ -59,7 +78,8 @@
   .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 12px 14px; }
   .day-cell { border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 10px 8px; cursor: pointer; min-height: 62px; background: var(--color-bg); transition: border-color 0.12s, background 0.12s; }
   .day-cell:hover { background: rgba(0,0,0,0.02); }
-  .day-cell.active { border: 0.5px solid var(--color-border); background: #F1F6FB; }
+  .day-cell.active { border: 0.5px solid var(--color-border); background: var(--color-detail-bg); }
+  .detail-bg { background: var(--color-detail-bg); }
   .day-cell.other-month { opacity: 0.3; cursor: default; pointer-events: none; }
   .day-dow { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px; }
   .day-num { font-size: 15px; font-weight: 500; margin-bottom: 5px; }
@@ -225,9 +245,95 @@
   .todo-tab-chip.inactive { background: none; color: #2e2e2e; border: 1.5px solid rgba(46,46,46,0.3); }
   .top-tab-btn .tab-emoji { opacity: 0.3; transition: opacity 0.15s; }
   .top-tab-btn.active .tab-emoji { opacity: 1; }
+
+  #theme-toggle {
+    position: fixed; top: 1rem; right: 1rem;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 0.5px solid var(--color-border-md);
+    background: var(--color-bg); color: var(--color-text-secondary);
+    cursor: pointer; font-size: 17px;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  #theme-toggle:hover { color: var(--color-text-primary); }
+
+  /* ── Mobile ─────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    body { padding: 1rem 0.875rem; }
+    .page-header { padding: 1.5rem 0 1rem; }
+    .page-icon { font-size: 44px; margin-bottom: 8px; }
+    .page-title { font-size: 26px; }
+    .top-tab-bar { gap: 14px; margin-bottom: 1.1rem; }
+    .top-tab-btn { font-size: 20px; }
+
+    /* Calendar */
+    .card { overflow: visible; }
+    .week-header { display: none; }
+    .cal-week {
+      padding: 8px 10px;
+      gap: 4px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .cal-week::-webkit-scrollbar { display: none; }
+    .day-cell { flex: 0 0 62px; min-width: 62px; padding: 7px 5px; min-height: 44px; }
+    .day-dow { font-size: 10px; margin-bottom: 3px; }
+    .day-num { font-size: 13px; margin-bottom: 3px; }
+    /* 캘린더 셀 안 도시 pill → 작은 색상 점으로, 두 도시일 때 가로 정렬 */
+    .day-cell br { display: none; }
+    .day-cell .city-pill {
+      font-size: 0; padding: 0;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 2px; vertical-align: middle;
+      margin-top: 0;
+    }
+    .day-cell .pill-istanbul   { background: #7F77DD; }
+    .day-cell .pill-cappadocia { background: #D85A30; }
+    .day-cell .pill-antalya    { background: #1D9E75; }
+
+    /* Detail */
+    .detail-header { padding: 12px 16px; }
+    .detail-title { font-size: 17px; }
+    .detail-body { padding: 12px 14px; }
+
+    /* Task items */
+    .task-item { padding: 12px 14px; }
+    .task-name-text { font-size: 15px; }
+
+    /* Section headers & bodies */
+    .hotel-section-header { padding: 12px 16px; }
+    .hotel-section-title { font-size: 15px; }
+    .hotel-body { padding: 12px 14px; }
+    .hotel-item { padding: 10px 12px; }
+    .hotel-item-name { font-size: 15px; }
+
+    /* Settlement */
+    .settlement-label { font-size: 14px; }
+    .settlement-cost { font-size: 14px; min-width: 68px; }
+    .settlement-total-label { font-size: 15px; }
+    .settlement-total-amount { font-size: 16px; }
+
+    /* Todo */
+    .todo-title { font-size: 15px; }
+
+    /* Forms — 16px 이하면 iOS Safari가 자동 확대함 */
+    input[type="text"], input[type="url"] { font-size: 16px; }
+    .desc-textarea { font-size: 16px; }
+    .submit-btn, .cancel-btn { flex: 1; }
+    .tag-btn { font-size: 13px; padding: 5px 11px; }
+    .hcity-btn { font-size: 13px; padding: 5px 11px; }
+  }
 </style>
+<script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
+<button id="theme-toggle" onclick="toggleTheme()" title="다크모드 전환"></button>
 <div id="loading-screen"><div class="spin"></div>데이터 불러오는 중…</div>
 <div class="container">
   <div id="firebase-error"></div>
@@ -336,7 +442,7 @@ function getWeekStart(w){const b=new Date(2026,8,7);b.setDate(b.getDate()+w*7);r
 function getTag(key){return TAGS.find(t=>t.key===key)||TAGS[7];}
 function fmtCost(n){if(!n&&n!==0)return '';return Number(n).toLocaleString('ko-KR')+'원';}
 function parseCost(s){const n=parseInt(String(s).replace(/[^0-9]/g,''));return isNaN(n)?null:n;}
-function freshForm(){return {mode:'add',editIdx:null,tag:null,title:'',desc:'',cost:'',optMode:null,mapUrl:'',pdfFile:null,pdfData:null,selectedHotelIdx:null,selectedFlightIdx:null};}
+function freshForm(){return {mode:'add',editIdx:null,tag:null,title:'',desc:'',cost:'',optMode:null,mapUrl:'',pdfFile:null,pdfData:null,selectedHotelIdx:null,selectedFlightIdx:null,selectedWishlistIdx:null,departDate:'',arriveDate:''};}
 let activeTab='schedule';
 function switchTab(tab){
   activeTab=tab;
@@ -353,9 +459,44 @@ function toggleSettlementSplit(key){_ss(key).split=!_ss(key).split;renderSettlem
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escAttr(s){return String(s).replace(/"/g,'&quot;').replace(/&/g,'&amp;');}
 
+function _mobileScrollToForm(rootId){
+  if(window.innerWidth>768)return;
+  requestAnimationFrame(()=>{
+    const root=document.getElementById(rootId);
+    if(!root)return;
+    const inp=root.querySelector('input[type="text"],input[type="url"],textarea');
+    if(!inp)return;
+    inp.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>inp.focus(),400);
+  });
+}
+
 function renderCal(){
   const root=document.getElementById('cal-root');
   if(!root)return;
+  if(window.innerWidth<=768){
+    const tripDates=Object.keys(SCHEDULE).sort();
+    let h='<div class="cal-week">';
+    tripDates.forEach(key=>{
+      const d=new Date(key+'T00:00:00');
+      const sch=SCHEDULE[key];
+      const isActive=selectedDate===key;
+      const pill=sch?CITY_PILL[sch.city]:'';
+      const toPill=sch&&sch.toCity?CITY_PILL[sch.toCity]:'';
+      h+=`<div class="day-cell${isActive?' active':''}" onclick="selectDay('${key}')">
+        <div class="day-dow">${DAYS[d.getDay()]}</div>
+        <div class="day-num">${d.getDate()}</div>
+        ${sch?`<span class="city-pill ${pill}">${sch.city}</span>${sch.toCity?`<br><span class="city-pill ${toPill}" style="margin-top:2px;">${sch.toCity}</span>`:''}`:''}
+      </div>`;
+    });
+    h+='</div>';
+    root.innerHTML=h;
+    requestAnimationFrame(()=>{
+      const el=root.querySelector('.day-cell.active');
+      if(el)el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+    });
+    return;
+  }
   const ws=getWeekStart(currentWeek);
   const weeks=['1주차 (9/7–13)','2주차 (9/14–20)','3주차 (9/21–27)'];
   let h=`<div class="week-header">
@@ -407,7 +548,8 @@ function buildForm(f,hasTasks){
   }
   let hotelPickerHtml='';
   if(f.tag==='hotel'&&hotels.length>0){
-    const cards=hotels.map((h,i)=>{
+    const _sh=[...hotels].map((h,i)=>({h,i})).sort((a,b)=>{const ao=CITIES.indexOf(a.h.city);const bo=CITIES.indexOf(b.h.city);return(ao<0?99:ao)-(bo<0?99:bo);});
+    const cards=_sh.map(({h,i})=>{
       const isSel=f.selectedHotelIdx===i;
       const pill=h.city?CITY_PILL[h.city]:'';
       return `<div class="hotel-pick-card${isSel?' selected':''}" onclick="selectHotelPreset(${i})">${h.city?`<span class="city-pill ${pill}" style="font-size:9px;margin-bottom:3px;display:block;">${esc(h.city)}</span>`:''}<div style="font-size:13px;">${esc(h.name)}</div></div>`;
@@ -416,19 +558,34 @@ function buildForm(f,hasTasks){
   }
   let flightPickerHtml='';
   if(f.tag==='move'&&vouchers.flight.length>0){
-    const cards=vouchers.flight.map((v,i)=>{
+    const _sf=[...vouchers.flight].map((v,i)=>({v,i})).sort((a,b)=>{if(!a.v.departDate&&!b.v.departDate)return 0;if(!a.v.departDate)return 1;if(!b.v.departDate)return -1;return a.v.departDate.localeCompare(b.v.departDate);});
+    const cards=_sf.map(({v,i})=>{
       const isSel=f.selectedFlightIdx===i;
       return `<div class="hotel-pick-card${isSel?' selected':''}" onclick="selectFlightPreset(${i})"><div style="font-size:13px;font-weight:500;">${esc(v.from||'?')} → ${esc(v.to||'?')}</div>${v.departDate?`<div style="font-size:12px;color:#6b6b6b;margin-top:2px;">${esc(v.departDate)}</div>`:''}</div>`;
     }).join('');
     flightPickerHtml=`<div class="hotel-picker"><div class="hotel-picker-label">저장된 이동편에서 선택</div><div class="hotel-pick-list">${cards}</div></div>`;
   }
+  let wishlistPickerHtml='';
+  const _wlTags=['food','cafe','shopping','tour','activity','etc'];
+  if(f.tag&&_wlTags.includes(f.tag)){
+    const matches=wishlist.reduce((acc,w,i)=>{if(w.tag===f.tag)acc.push({w,i});return acc;},[]);
+    if(matches.length>0){
+      const cards=matches.map(({w,i})=>{
+        const isSel=f.selectedWishlistIdx===i;
+        const subText=w.desc?(w.desc.length>20?w.desc.slice(0,20)+'…':w.desc):'';
+        return `<div class="hotel-pick-card${isSel?' selected':''}" onclick="selectWishlistPreset(${i})"><div style="font-size:13px;font-weight:500;">${esc(w.name)}</div>${subText?`<div style="font-size:12px;color:#6b6b6b;margin-top:2px;">${esc(subText)}</div>`:''}</div>`;
+      }).join('');
+      wishlistPickerHtml=`<div class="hotel-picker"><div class="hotel-picker-label">보석함에서 가져오기</div><div class="hotel-pick-list">${cards}</div></div>`;
+    }
+  }
+  const moveDateFields=f.tag==='move'?`<div style="display:flex;gap:10px;"><div style="flex:1;min-width:0;"><div class="field-label">출발일 <span class="field-opt">(선택)</span></div><input type="text" id="inp-departDate" placeholder="예: 9/10 06:00" value="${escAttr(f.departDate||'')}"></div><div style="flex:1;min-width:0;"><div class="field-label">도착일 <span class="field-opt">(선택)</span></div><input type="text" id="inp-arriveDate" placeholder="예: 9/10 12:30" value="${escAttr(f.arriveDate||'')}"></div></div>`:'';
   const cancelBtn=(hasTasks||isEdit)?`<button class="cancel-btn" onclick="cancelForm()">취소</button>`:'';
   return `<div class="${(hasTasks||isEdit)?'add-section':''}">
     <div style="background:#fff;border:0.5px solid var(--color-border);border-radius:var(--radius-md);padding:14px 16px;">
     <div class="form-section-title">${isEdit?'일정 수정':'일정'}</div>
     <div class="field-label" style="margin-bottom:8px;">태그 <span class="field-opt">(선택)</span></div>
     <div class="tags-row">${tagBtns}</div>
-    ${hotelPickerHtml}${flightPickerHtml}
+    ${hotelPickerHtml}${flightPickerHtml}${wishlistPickerHtml}${moveDateFields}
     <div class="field-label">제목 <span class="field-required">*</span></div>
     <input type="text" id="inp-title" placeholder="이 날은 뭘 해보면 좋을까?🤩" value="${escAttr(f.title||'')}" onkeydown="if(event.key==='Enter')submitForm()">
     <div class="field-label">설명 <span class="field-opt">(선택)</span></div>
@@ -471,6 +628,7 @@ function renderDetail(){
       const tag=getTag(t.tag);
       const tc=TAG_COLORS[tag.key];
       let extra='';
+      if(t.tag==='move'&&(t.departDate||t.arriveDate)) extra+=`<div style="font-size:14px;color:#6b6b6b;margin-top:2px;">${t.departDate?esc(t.departDate):''}${t.departDate&&t.arriveDate?' → ':''}${t.arriveDate?esc(t.arriveDate):''}</div>`;
       if(t.desc) extra+=`<div class="task-desc-text">${esc(t.desc)}</div>`;
       if(t.mapUrl) extra+=`<a class="map-text" href="${escAttr(t.mapUrl)}" target="_blank">📍위치보기</a>`;
       if(t.pdf) extra+=`<div class="task-meta"><i class="ti ti-paperclip" style="font-size:11px;vertical-align:-1px"></i> ${esc(t.pdf)}${t.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openTaskPdf(${i})">열기</span>`:''}</div>`;
@@ -505,7 +663,7 @@ function renderDetail(){
       <button class="add-task-cta-btn" onclick="openAddForm()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 일정 추가</button>`;
   }
 
-  root.innerHTML=`<div style="background:#F1F6FB;">
+  root.innerHTML=`<div class="detail-bg">
     <div class="detail-header">
       <div class="detail-title">9월 ${d.getDate()}일 (${DAYS[d.getDay()]})${sch?` <span class="city-pill ${pill}" style="font-size:11px;vertical-align:2px;">${sch.city}</span>${sch.toCity?` <span class="city-pill ${toPill}" style="font-size:11px;vertical-align:2px;">${sch.toCity}</span>`:''}`:''}
       </div>
@@ -524,17 +682,19 @@ function syncFormInputs(){
   const de=document.getElementById('inp-desc'); if(de) formState.desc=de.value;
   const u=document.getElementById('inp-map-url'); if(u) formState.mapUrl=u.value;
   const c=document.getElementById('inp-cost'); if(c) formState.cost=c.value;
+  const dep=document.getElementById('inp-departDate');if(dep)formState.departDate=dep.value;
+  const arr=document.getElementById('inp-arriveDate');if(arr)formState.arriveDate=arr.value;
 }
 function setTag(key){ syncFormInputs(); if(!formState)formState=freshForm(); formState.tag=formState.tag===key?null:key; renderDetail(); }
 function toggleOpt(mode){ syncFormInputs(); if(!formState)formState=freshForm(); formState.optMode=formState.optMode===mode?null:mode; renderDetail(); }
 function setPdf(e){ const f=e.target.files[0]; if(!f)return; if(!formState)formState=freshForm(); const r=new FileReader(); r.onload=ev=>{formState.pdfFile=f.name;formState.pdfData=ev.target.result;renderDetail();}; r.readAsDataURL(f); }
 function removePdf(){ if(formState){formState.pdfFile=null;formState.pdfData=null;} renderDetail(); }
-function openAddForm(){ formState=freshForm(); renderDetail(); }
+function openAddForm(){ formState=freshForm(); renderDetail(); _mobileScrollToForm('detail-root'); }
 function cancelForm(){ formState=null; renderDetail(); }
 function startEdit(idx){
   const t=tasks[selectedDate][idx];
-  formState={mode:'edit',editIdx:idx,tag:t.tag||null,title:t.name,desc:t.desc||'',cost:t.cost||'',optMode:t.mapUrl?'map':t.pdf?'pdf':null,mapUrl:t.mapUrl||'',pdfFile:t.pdf||null,pdfData:t.pdfData||null,selectedHotelIdx:null,selectedFlightIdx:null};
-  renderDetail();
+  formState={mode:'edit',editIdx:idx,tag:t.tag||null,title:t.name,desc:t.desc||'',cost:t.cost||'',optMode:t.mapUrl?'map':t.pdf?'pdf':null,mapUrl:t.mapUrl||'',pdfFile:t.pdf||null,pdfData:t.pdfData||null,selectedHotelIdx:null,selectedFlightIdx:null,selectedWishlistIdx:null,departDate:t.departDate||'',arriveDate:t.arriveDate||''};
+  renderDetail(); _mobileScrollToForm('detail-root');
 }
 function submitForm(){
   syncFormInputs();
@@ -545,6 +705,8 @@ function submitForm(){
   const cost=parseCost(f.cost); if(cost!==null) item.cost=cost;
   if(f.optMode==='map'&&f.mapUrl) item.mapUrl=f.mapUrl;
   if(f.optMode==='pdf'&&f.pdfFile){item.pdf=f.pdfFile;if(f.pdfData)item.pdfData=f.pdfData;}
+  if(f.departDate&&f.departDate.trim())item.departDate=f.departDate.trim();
+  if(f.arriveDate&&f.arriveDate.trim())item.arriveDate=f.arriveDate.trim();
   if(!tasks[selectedDate]) tasks[selectedDate]=[];
   if(f.mode==='edit'&&f.editIdx!=null){ tasks[selectedDate][f.editIdx]=item; }
   else { tasks[selectedDate].push(item); }
@@ -578,7 +740,8 @@ function renderHotelSection(){
   if(hotels.length===0){
     listHtml=`<div class="hotel-empty">저장된 숙소가 없어요.</div>`;
   } else {
-    listHtml=hotels.map((h,i)=>{
+    const _sortedH=[...hotels].map((h,i)=>({h,i})).sort((a,b)=>{const ao=CITIES.indexOf(a.h.city);const bo=CITIES.indexOf(b.h.city);return(ao<0?99:ao)-(bo<0?99:bo);});
+    listHtml=_sortedH.map(({h,i})=>{
       const pill=h.city?CITY_PILL[h.city]:'';
       return `<div class="hotel-item">
         <div class="hotel-item-info">
@@ -587,6 +750,7 @@ function renderHotelSection(){
           ${h.desc?`<div class="hotel-item-address">${esc(h.desc)}</div>`:''}
           ${h.cost!=null?`<div class="cost-text">💰 ${fmtCost(h.cost)}</div>`:''}
           ${h.mapUrl?`<a class="map-text" href="${escAttr(h.mapUrl)}" target="_blank">📍위치보기</a>`:''}
+          ${h.pdf?`<div class="hotel-item-dates"><i class="ti ti-paperclip" style="font-size:11px;vertical-align:-1px"></i> ${esc(h.pdf)}${h.pdfData?` <span class="attach-remove" style="color:var(--color-text-info);" onclick="openHotelPdf(${i})">열기</span>`:''}</div>`:''}
         </div>
         <div class="hotel-item-actions">
           <button class="icon-btn edit" onclick="startHotelEdit(${i})" title="수정"><i class="ti ti-edit"></i></button>
@@ -611,7 +775,14 @@ function renderHotelSection(){
       <div class="field-label">설명 <span class="field-opt">(선택)</span></div>
       <input type="text" id="h-desc" placeholder="예: 조식 포함, 조용한 위치" value="${escAttr(hf.desc)}">
       <div class="field-label">지출 <span class="field-opt">(선택)</span></div>
-      <input type="text" id="h-cost" placeholder="예: 320000" value="${escAttr(hf.cost||'')}" inputmode="numeric" style="margin-bottom:10px;">
+      <input type="text" id="h-cost" placeholder="예: 320000" value="${escAttr(hf.cost||'')}" inputmode="numeric">
+      <div class="field-label">바우처 PDF <span class="field-opt">(선택)</span></div>
+      <label class="pdf-upload-label" style="margin-bottom:6px;">
+        <i class="ti ti-upload" style="font-size:15px"></i>
+        <span>${hf.pdfFile||'PDF 파일 선택'}</span>
+        <input type="file" accept=".pdf" onchange="setHotelPdf(event)">
+      </label>
+      ${hf.pdfFile?`<div class="pdf-attached" style="margin-bottom:10px;"><i class="ti ti-file" style="font-size:11px;vertical-align:-1px"></i> ${esc(hf.pdfFile)} ${hf.pdfData?`<span class="attach-remove" style="color:var(--color-text-info);" onclick="openPdfData(hotelFormState.pdfData)">열기</span> `:''}<span class="attach-remove" onclick="removeHotelPdf()">삭제</span></div>`:'<div style="margin-bottom:10px;"></div>'}
       <div class="field-label" style="margin-bottom:8px;">지역 <span class="field-opt">(선택)</span></div>
       <div class="tags-row" style="margin-bottom:0;">${cityBtns}</div>
       <div class="submit-row">
@@ -634,7 +805,10 @@ function renderHotelSection(){
   </div>`;
 }
 function toggleHotelSection(){hotelOpen=!hotelOpen;renderHotelSection();}
-function openHotelAdd(){hotelFormState={mode:'add',editIdx:null,name:'',mapUrl:'',desc:'',cost:'',city:null};renderHotelSection();}
+function openHotelAdd(){hotelFormState={mode:'add',editIdx:null,name:'',mapUrl:'',desc:'',cost:'',city:null,pdfFile:null,pdfData:null};renderHotelSection();_mobileScrollToForm('hotel-root');}
+function setHotelPdf(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{hotelFormState.pdfFile=f.name;hotelFormState.pdfData=ev.target.result;renderHotelSection();};r.readAsDataURL(f);}
+function removeHotelPdf(){if(hotelFormState){hotelFormState.pdfFile=null;hotelFormState.pdfData=null;}renderHotelSection();}
+function openHotelPdf(idx){const d=(hotels[idx]||{}).pdfData;if(d)openPdfData(d);}
 function cancelHotelForm(){hotelFormState=null;renderHotelSection();}
 function setHotelCity(city){syncHotelFormInputs();hotelFormState.city=hotelFormState.city===city?null:city;renderHotelSection();}
 function syncHotelFormInputs(){
@@ -643,8 +817,8 @@ function syncHotelFormInputs(){
 }
 function startHotelEdit(idx){
   const h=hotels[idx];if(!h)return;
-  hotelFormState={mode:'edit',editIdx:idx,name:h.name,mapUrl:h.mapUrl||'',desc:h.desc||'',cost:h.cost||'',city:h.city||null};
-  renderHotelSection();
+  hotelFormState={mode:'edit',editIdx:idx,name:h.name,mapUrl:h.mapUrl||'',desc:h.desc||'',cost:h.cost||'',city:h.city||null,pdfFile:h.pdf||null,pdfData:h.pdfData||null};
+  renderHotelSection();_mobileScrollToForm('hotel-root');
 }
 function submitHotelForm(){
   syncHotelFormInputs();
@@ -655,6 +829,7 @@ function submitHotelForm(){
   if(hf.desc.trim())item.desc=hf.desc.trim();
   if(hf.city)item.city=hf.city;
   const cost=parseCost(hf.cost); if(cost!==null)item.cost=cost;
+  if(hf.pdfFile){item.pdf=hf.pdfFile;if(hf.pdfData)item.pdfData=hf.pdfData;}
   if(hf.mode==='edit'&&hf.editIdx!=null){hotels[hf.editIdx]=item;}
   else{hotels.push(item);}
   hotelFormState=null;
@@ -680,6 +855,19 @@ function selectFlightPreset(idx){
   formState.title=`${v.from||'?'} → ${v.to||'?'}`;
   formState.selectedFlightIdx=idx;
   if(v.cost!=null)formState.cost=String(v.cost);
+  if(v.departDate)formState.departDate=v.departDate;
+  if(v.arriveDate)formState.arriveDate=v.arriveDate;
+  renderDetail();
+}
+function selectWishlistPreset(idx){
+  if(!formState)return;
+  const w=wishlist[idx];if(!w)return;
+  syncFormInputs();
+  formState.title=w.name;
+  formState.selectedWishlistIdx=idx;
+  if(w.cost!=null&&w.cost!=='')formState.cost=String(w.cost);
+  if(w.desc)formState.desc=w.desc;
+  if(w.mapUrl){formState.mapUrl=w.mapUrl;formState.optMode='map';}
   renderDetail();
 }
 
@@ -694,7 +882,8 @@ function renderVoucherSection(type){
   if(list.length===0){
     listHtml=`<div class="hotel-empty">저장된 ${cfg.label} 바우처가 없어요.</div>`;
   } else if(type==='flight'){
-    listHtml=list.map((item,i)=>`<div class="hotel-item">
+    const _sortedF=[...list].map((item,i)=>({item,i})).sort((a,b)=>{if(!a.item.departDate&&!b.item.departDate)return 0;if(!a.item.departDate)return 1;if(!b.item.departDate)return -1;return a.item.departDate.localeCompare(b.item.departDate);});
+    listHtml=_sortedF.map(({item,i})=>`<div class="hotel-item">
       <div class="hotel-item-info">
         <div class="hotel-item-name">${esc(item.from||'?')} → ${esc(item.to||'?')}</div>
         ${(item.departDate||item.arriveDate)?`<div class="hotel-item-dates">${item.departDate?esc(item.departDate):''}${item.departDate&&item.arriveDate?' → ':''}${item.arriveDate?esc(item.arriveDate):''}</div>`:''}
@@ -787,7 +976,7 @@ function openVoucherAdd(type){
   vForm[type]=type==='flight'
     ?{mode:'add',editIdx:null,from:'',to:'',departDate:'',arriveDate:'',cost:'',pdf:null,pdfData:null}
     :{mode:'add',editIdx:null,name:'',date:'',desc:'',cost:'',pdf:null,pdfData:null};
-  renderVoucherSection(type);
+  renderVoucherSection(type);_mobileScrollToForm(`${type}-root`);
 }
 function cancelVoucherForm(type){vForm[type]=null;renderVoucherSection(type);}
 function syncVoucherForm(type){
@@ -805,7 +994,7 @@ function startVoucherEdit(type,idx){
   vForm[type]=type==='flight'
     ?{mode:'edit',editIdx:idx,from:item.from||'',to:item.to||'',departDate:item.departDate||'',arriveDate:item.arriveDate||'',cost:item.cost||'',pdf:item.pdf||null,pdfData:item.pdfData||null}
     :{mode:'edit',editIdx:idx,name:item.name,date:item.date||'',desc:item.desc||'',cost:item.cost||'',pdf:item.pdf||null,pdfData:item.pdfData||null};
-  renderVoucherSection(type);
+  renderVoucherSection(type);_mobileScrollToForm(`${type}-root`);
 }
 function submitVoucherForm(type){
   syncVoucherForm(type);
@@ -885,14 +1074,18 @@ function selectWishlistFlightPreset(idx){
   wishlistFormState.title=`${v.from||'?'} → ${v.to||'?'}`;
   wishlistFormState.selectedFlightIdx=idx;
   if(v.cost!=null)wishlistFormState.cost=String(v.cost);
+  const parts=[];
+  if(v.departDate)parts.push(`출발: ${v.departDate}`);
+  if(v.arriveDate)parts.push(`도착: ${v.arriveDate}`);
+  if(parts.length)wishlistFormState.desc=parts.join('\n');
   renderWishlistSection();
 }
-function openWishlistAdd(){wishlistFormState=freshWishlistForm();renderWishlistSection();}
+function openWishlistAdd(){wishlistFormState=freshWishlistForm();renderWishlistSection();_mobileScrollToForm('wishlist-root');}
 function cancelWishlistForm(){wishlistFormState=null;renderWishlistSection();}
 function startWishlistEdit(idx){
   const w=wishlist[idx];if(!w)return;
   wishlistFormState={mode:'edit',editIdx:idx,tag:w.tag||null,title:w.name,desc:w.desc||'',cost:w.cost!=null?String(w.cost):'',optMode:w.mapUrl?'map':w.pdf?'pdf':null,mapUrl:w.mapUrl||'',pdfFile:w.pdf||null,pdfData:w.pdfData||null,selectedHotelIdx:null,selectedFlightIdx:null};
-  renderWishlistSection();
+  renderWishlistSection();_mobileScrollToForm('wishlist-root');
 }
 function submitWishlistForm(){
   syncWishlistFormInputs();
@@ -1094,11 +1287,11 @@ function renderTodoSection(){
 }
 function switchTodoSubTab(tab){todoSubTab=tab;renderTodoSection();}
 function toggleTodoSection(){todoOpen=!todoOpen;renderTodoSection();}
-function openTodoAdd(){syncTodoForm();todoFormState={mode:'add',title:'',person:null};renderTodoSection();}
+function openTodoAdd(){syncTodoForm();todoFormState={mode:'add',title:'',person:null};renderTodoSection();_mobileScrollToForm('todo-root');}
 function cancelTodoForm(){todoFormState=null;renderTodoSection();}
 function syncTodoForm(){if(!todoFormState)return;const el=document.getElementById('todo-title');if(el)todoFormState.title=el.value;}
 function setTodoPerson(k){syncTodoForm();if(!todoFormState)return;todoFormState.person=todoFormState.person===k?null:k;renderTodoSection();}
-function startTodoEdit(idx){const t=todos[idx];if(!t)return;todoFormState={mode:'edit',editIdx:idx,title:t.title,person:t.person||null};renderTodoSection();}
+function startTodoEdit(idx){const t=todos[idx];if(!t)return;todoFormState={mode:'edit',editIdx:idx,title:t.title,person:t.person||null};renderTodoSection();_mobileScrollToForm('todo-root');}
 function submitTodoForm(){
   syncTodoForm();const tf=todoFormState;if(!tf||!tf.title.trim())return;
   const item={title:tf.title.trim(),person:tf.person||null,done:false};
@@ -1113,8 +1306,8 @@ function renderSettlementSection(){
   const root=document.getElementById('settlement-root');
   if(!root)return;
   const items=[];
-  vouchers.flight.forEach((v,i)=>{if(v.cost!=null)items.push({key:`f-${i}`,label:`${v.from||'?'} → ${v.to||'?'}`,tagLabel:'이동편',tagBg:'#E6F1FB',tagColor:'#0C447C',cost:v.cost});});
-  hotels.forEach((h,i)=>{if(h.cost!=null)items.push({key:`h-${i}`,label:h.name,tagLabel:'숙소',tagBg:'#E1F5EE',tagColor:'#085041',cost:h.cost});});
+  [...vouchers.flight].map((v,i)=>({v,i})).sort((a,b)=>{if(!a.v.departDate&&!b.v.departDate)return 0;if(!a.v.departDate)return 1;if(!b.v.departDate)return -1;return a.v.departDate.localeCompare(b.v.departDate);}).forEach(({v,i})=>{if(v.cost!=null)items.push({key:`f-${i}`,label:`${v.from||'?'} → ${v.to||'?'}`,tagLabel:'이동편',tagBg:'#E6F1FB',tagColor:'#0C447C',cost:v.cost});});
+  [...hotels].map((h,i)=>({h,i})).sort((a,b)=>{const ao=CITIES.indexOf(a.h.city);const bo=CITIES.indexOf(b.h.city);return(ao<0?99:ao)-(bo<0?99:bo);}).forEach(({h,i})=>{if(h.cost!=null)items.push({key:`h-${i}`,label:h.name,tagLabel:'숙소',tagBg:'#E1F5EE',tagColor:'#085041',cost:h.cost});});
   Object.keys(tasks).sort().forEach(date=>{
     (tasks[date]||[]).forEach((t,i)=>{
       if(t.cost!=null){
@@ -1170,6 +1363,7 @@ function _checkReady(){
     document.getElementById('loading-screen').style.display='none';
     selectNearestDate();
     renderSettlementSection();
+    todoOpen = todos.some(t => !t.done);
     renderTodoSection();
     renderWishlistSection();
     renderHotelSection();
@@ -1239,13 +1433,31 @@ setTimeout(()=>{
   }
 })();
 
+function _updateThemeToggle(){
+  const btn=document.getElementById('theme-toggle');
+  if(!btn)return;
+  const theme=document.documentElement.getAttribute('data-theme');
+  const isDark=theme==='dark'||(!theme&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+  btn.innerHTML=isDark?'<i class="ti ti-sun"></i>':'<i class="ti ti-moon"></i>';
+}
+function toggleTheme(){
+  const theme=document.documentElement.getAttribute('data-theme');
+  const isDark=theme==='dark'||(!theme&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const next=isDark?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('theme',next);
+  _updateThemeToggle();
+}
+_updateThemeToggle();
+
 // inline onclick 핸들러들을 window에 노출
 Object.assign(window,{
   changeWeek, selectDay, openAddForm, setTag, toggleOpt, syncFormInputs,
   setPdf, removePdf, openPdfData, cancelForm, submitForm, startEdit, deleteTask, openTaskPdf,
   onDragStart, onDragOver, onDrop, onDragEnd,
   toggleHotelSection, openHotelAdd, startHotelEdit, deleteHotel,
-  setHotelCity, syncHotelFormInputs, submitHotelForm, cancelHotelForm, selectHotelPreset, selectFlightPreset,
+  setHotelCity, syncHotelFormInputs, submitHotelForm, cancelHotelForm, selectHotelPreset, selectFlightPreset, selectWishlistPreset,
+  setHotelPdf, removeHotelPdf, openHotelPdf,
   toggleVoucherSection, openVoucherAdd, startVoucherEdit, deleteVoucher,
   setVoucherPdf, removeVoucherPdf, submitVoucherForm, cancelVoucherForm, openVoucherPdf,
   toggleSettlementSection, toggleSettlementCheck, toggleSettlementSplit,
@@ -1257,7 +1469,7 @@ Object.assign(window,{
   startWishlistEdit, submitWishlistForm, deleteWishlistItem,
   openWishlistDatePick, addWishlistToDate,
   findWishlistInTasks, removeWishlistFromSchedule,
-  switchTab,
+  switchTab, toggleTheme,
 });
 </script>
 </body>
